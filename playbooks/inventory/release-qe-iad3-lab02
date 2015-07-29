@@ -1,64 +1,34 @@
 [all]
-578078-infra01 ansible_ssh_host=10.4.213.132 ansible_ssh_user=root member_number=132
-578079-infra02 ansible_ssh_host=10.4.213.133 ansible_ssh_user=root member_number=133
-578080-infra03 ansible_ssh_host=10.4.213.134 ansible_ssh_user=root member_number=134
-578097-compute01 ansible_ssh_host=10.4.213.151 ansible_ssh_user=root member_number=151
-578081-compute02 ansible_ssh_host=10.4.213.135 ansible_ssh_user=root member_number=135
-578082-compute03 ansible_ssh_host=10.4.213.136 ansible_ssh_user=root member_number=136
-578083-compute04 ansible_ssh_host=10.4.213.137 ansible_ssh_user=root member_number=137
-578084-compute05 ansible_ssh_host=10.4.213.138 ansible_ssh_user=root member_number=138
-578085-compute06 ansible_ssh_host=10.4.213.139 ansible_ssh_user=root member_number=139
-578086-compute07 ansible_ssh_host=10.4.213.140 ansible_ssh_user=root member_number=140
-578087-compute08 ansible_ssh_host=10.4.213.141 ansible_ssh_user=root member_number=141
-578088-compute09 ansible_ssh_host=10.4.213.142 ansible_ssh_user=root member_number=142
-578089-compute10 ansible_ssh_host=10.4.213.143 ansible_ssh_user=root member_number=143
-578090-compute11 ansible_ssh_host=10.4.213.144 ansible_ssh_user=root member_number=144
-578091-compute12 ansible_ssh_host=10.4.213.145 ansible_ssh_user=root member_number=145
-578092-compute13 ansible_ssh_host=10.4.213.146 ansible_ssh_user=root member_number=146
-578093-compute14 ansible_ssh_host=10.4.213.147 ansible_ssh_user=root member_number=147
-578094-compute15 ansible_ssh_host=10.4.213.148 ansible_ssh_user=root member_number=148
-578095-compute16 ansible_ssh_host=10.4.213.149 ansible_ssh_user=root member_number=149
-578096-compute17 ansible_ssh_host=10.4.213.150 ansible_ssh_user=root member_number=150
-578099-compute18 ansible_ssh_host=10.4.213.153 ansible_ssh_user=root member_number=153
-578100-cinder01 ansible_ssh_host=10.4.213.154 ansible_ssh_user=root member_number=154
-578101-cinder02 ansible_ssh_host=10.4.213.155 ansible_ssh_user=root member_number=155
-578098-logger01 ansible_ssh_host=10.4.213.152 ansible_ssh_user=root member_number=152
-
-[deployment]
-578078-infra01
+573956-infra01 ansible_ssh_host=10.240.0.170 ansible_ssh_user=root member_number=170
+573957-infra02 ansible_ssh_host=10.240.0.171 ansible_ssh_user=root member_number=171
+573958-infra03 ansible_ssh_host=10.240.0.172 ansible_ssh_user=root member_number=172
+573959-logging01 ansible_ssh_host=10.240.0.173 ansible_ssh_user=root member_number=173
+573960-compute01 ansible_ssh_host=10.240.0.174 ansible_ssh_user=root member_number=174
+573961-compute02 ansible_ssh_host=10.240.0.175 ansible_ssh_user=root member_number=175
+573962-compute03 ansible_ssh_host=10.240.0.176 ansible_ssh_user=root member_number=176
+573963-storage01 ansible_ssh_host=10.240.0.177 ansible_ssh_user=root member_number=177
+573964-storage02 ansible_ssh_host=10.240.0.178 ansible_ssh_user=root member_number=178
+573965-storage03 ansible_ssh_host=10.240.0.179 ansible_ssh_user=root member_number=179
 
 [infrastructure]
-578078-infra01
-578079-infra02
-578080-infra03
+573956-infra01
+573957-infra02
+573958-infra03
 
 [network]
-578079-infra02
-578080-infra03
+573956-infra01
+573957-infra02
+573958-infra03
 
 [compute]
-578097-compute01
-578081-compute02
-578082-compute03
-578083-compute04
-578084-compute05
-578085-compute06
-578086-compute07
-578087-compute08
-578088-compute09
-578089-compute10
-578090-compute11
-578091-compute12
-578092-compute13
-578093-compute14
-578094-compute15
-578095-compute16
-578096-compute17
-578099-compute18
+573960-compute01
+573961-compute02
+573962-compute03
 
 [cinder]
-578100-cinder01
-578101-cinder02
+573963-storage01
+573964-storage02
+573965-storage03
 
 [logger]
-578098-logger01
+573959-logging01

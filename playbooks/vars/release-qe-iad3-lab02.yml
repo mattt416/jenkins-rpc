@@ -1,149 +1,189 @@
-user_config:
-    container_cidr: 192.168.100.0/22
-    tunnel_cidr:  172.29.241.0/22
-    service_cidr: 172.29.236.0/22
-    used_ips:
-        - "192.168.100.1,192.168.100.15"
-        - "192.168.100.132,192.168.100.155"
-        - "172.29.241.132,172.29.241.155"
-        - "172.29.236.1"
-    internal_lb_vip_address: 192.168.100.10
-    external_lb_vip_address: 204.232.187.80
-    tunnel_bridge: br-vxlan
-    container_bridge: br-mgmt
-    lb_name:
-    networking:
-        - name: container
-          bridge: br-mgmt
-          container_bridge: br-mgmt
-          container_interface: eth1
-          ip_from_q: container
-          type: raw
-          group_binds:
-            - all_containers
-            - hosts
-        - name: provider
-          bridge: br-vlan
-          container_interface: eth11
-          type: vlan
-          range: 410:410
-          net_name: vlan
-          group_binds:
-            - neutron_linuxbridge_agent
-        - name: tenant
-          bridge: br-vxlan
-          container_interface: eth10
-          ip_from_q: tunnel
-          type: vxlan
-          range: 1:1000
-          net_name: vxlan
-          group_binds:
-            - neutron_linuxbridge_agent
-        - name: service
-          bridge: br-snet
-          container_interface: eth3
-          ip_from_q: snet
-          type: raw
-          group_binds:
-            - glance_api
-            - nova_compute
-            - neutron_linuxbridge_agent
+---
+rpc_user_config:
+  container_cidr: 172.20.236.0/22
+  tunnel_cidr:  172.20.240.0/22
+  storage_cidr: 172.20.244.0/22
+  used_ips:
+    - "172.20.236.1,172.20.236.15"
+    - "172.20.236.170,172.20.236.179"
+    - "172.20.240.170,172.20.240.179"
+    - "172.20.244.170,172.20.244.179"
+  internal_lb_vip_address: 172.20.236.10
+  external_lb_vip_address: 204.232.187.36
+  tunnel_bridge: br-vxlan
+  container_bridge: br-mgmt
+  lb_name: 568572-lbal1.qe.iad3.rackspace.com
+  networking:
+    - name: container
+      bridge: br-mgmt
+      container_bridge: br-mgmt
+      container_interface: eth1
+      ip_from_q: container
+      type: raw
+      group_binds:
+        - all_containers
+        - hosts
+    - name: provider
+      bridge: br-vlan
+      container_interface: eth11
+      type: vlan
+      range: 840:840
+      net_name: vlan
+      group_binds:
+        - neutron_linuxbridge_agent
+    - name: tenant
+      bridge: br-vxlan
+      container_interface: eth10
+      ip_from_q: tunnel
+      type: vxlan
+      range: 1:1000
+      net_name: vxlan
+      group_binds:
+        - neutron_linuxbridge_agent
+    - name: storage
+      bridge: br-storage
+      container_interface: eth2
+      ip_from_q: storage
+      type: raw
+      group_binds:
+        - glance_api
+        - cinder_api
+        - nova_compute
+        - cinder_volume
+
+networking:
+  - name: lo
+    type: loopback
+  # Physical interfaces for management/storage
+  - name: p6p1
+    type: manual
+    directives:
+      - "bond-master bond0"
+      - "bond-primary p6p1"
+  - name: p7p1
+    type: manual
+    directives:
+      - "bond-master bond0"
+  # Service network
+  - name: em3
+    type: static
+    directives:
+      - "address {{ ansible_em3.ipv4.address }}"
+      - "netmask {{ ansible_em3.ipv4.netmask }}"
+      - "post-up ip route add 10.191.192.0/18 via 10.136.157.225 dev em3"
+  # Physical interfaces for tunnels/tennant
+  - name: p6p2
+    type: manual
+    directives:
+      - "bond-master bond1"
+      - "bond-primary p6p2"
+  - name: p7p2
+    type: manual
+    directives:
+      - "bond-master bond1"
+  # Bond interface 0 (p6p1 and p7p1) for management/storage
+  - name: bond0
+    type: static
+    directives:
+      - "bond-slaves p6p1 p7p1"
+      - "bond-mode active-backup"
+      - "bond-miimon 100"
+      - "bond-downdelay 200"
+      - "bond-updelay 200"
+      - "address {{ ansible_default_ipv4.address }}"
+      - "netmask {{ ansible_default_ipv4.netmask }}"
+      - "gateway {{ ansible_default_ipv4.gateway }}"
+      - "dns-nameservers 69.20.0.164 69.20.0.196"
+      - "dns-search qe1.iad3.rackspace.com"
+  # Bond interface 1 (p6p2 and p7p2)
+  - name: bond1
+    type: manual
+    directives:
+      - "bond-slaves p6p1 p7p1"
+      - "bond-mode active-backup"
+      - "bond-miimon 100"
+      - "bond-downdelay 250"
+      - "bond-updelay 250"
+  # Container management VLAN interface
+  - name: bond0.837
+    type: manual
+    directives:
+      - "vlan-raw-device bond0"
+  # OpenStack networking VXLAN (tunnel/overlay)VLAN interface
+  - name: bond1.839
+    type: manual
+    directives:
+      - "vlan-raw-device bond1"
+  - name: bond0.838
+    type: manual
+    directives:
+      - "vlan-raw-device bond0"
+  # Container management bridge
+  - name: br-mgmt
+    type: static
+    directives:
+      - "bridge_stp off"
+      - "bridge_waitport 0"
+      - "bridge_fd 0"
+      # Bridge port references tagged interface
+      - "bridge-ports bond0.837"
+      - "address 172.20.236.{{member_number}}"
+      - "netmask 255.255.252.0"
+      - "dns-nameservers 69.20.0.164 69.20.0.196"
+  # OpenStack networking VXLAN (tunnel/overlay) bridge
+  - name: br-vxlan
+    type: static
+    directives:
+      - "bridge_stp off"
+      - "bridge_waitport 0"
+      - "bridge_fd 0"
+      # Bridge port references tagged interface
+      - "bridge_ports bond1.839"
+      - "address 172.20.240.{{member_number}}"
+      - "netmask 255.255.252.0"
+  # OpenStack networking VLAN bridge
+  - name: br-vlan
+    type: manual
+    directives:
+      - "bridge_stp off"
+      - "bridge_waitport 0"
+      - "bridge_fd 0"
+      # Bridge port references tagged interface
+      - "bridge_ports bond1"
+  # Storage bridge (optional)
+  - name: br-storage
+    type: static
+    directives:
+      - "bridge_stp off"
+      - "bridge_waitport 0"
+      - "bridge_fd 0"
+      # Bridge port references un-tagged interface
+      - "bridge_ports bond0.838"
+      - "address 172.20.244.{{ member_number }}"
+      - "netmask 255.255.252.0"
+  # Service bridge (Rackspace datacenters only)
+  - name: br-snet
+    type: static
+    directives:
+      - "bridge_stp off"
+      - "bridge_waitport 0"
+      - "bridge_fd 0"
+      # No bridge port on this bridge
+      - "address 172.29.248.1"
+      - "netmask 255.255.252.0"
+
+# Cinder's volume group
+vgs:
+  - name: cinder-volumes
+    device: /dev/sdb
+
 cinder_storage:
   backends:
     lvm:
       volume_group: cinder-volumes
+      volume_driver: cinder.volume.drivers.lvm.LVMISCSIDriver
+      volume_backend_name: LVM_iSCSI
     lvm_ssd:
       volume_group: cinder-volumes
-networking:
-    - name: lo
-      type: loopback
-    - name: em1
-      type: manual
-      directives:
-        - "bond-master bond0"
-        - "bond-primary em1"
-    - name: em3
-      type: static
-      directives:
-      - "netmask {{ ansible_em3.ipv4.netmask }}"
-      - "post-up ip route add 10.191.192.0/18 via 10.136.93.97 dev em3"
-      - "address {{ ansible_em3.ipv4.address }}"
-    - name: em4
-      type: manual
-      directives:
-        - "bond-master bond0"
-    - name: p6p1
-      type: manual
-      directives:
-        - "bond-master bond1"
-        - "bond-primary p6p1"
-    - name: p7p1
-      type: manual
-      directives:
-        - "bond-master bond1"
-    - name: bond0
-      type: static
-      directives:
-        - "bond-slaves none"
-        - "bond-mode active-backup"
-        - "bond-miimon 100"
-        - "bond-downdelay 200"
-        - "bond-updelay 200"
-        - "address {{ ansible_default_ipv4.address }}"
-        - "netmask {{ ansible_default_ipv4.netmask }}"
-        - "gateway {{ ansible_default_ipv4.gateway }}"
-        - "dns-nameservers 69.20.0.164 69.20.0.196"
-        - "dns-search qe1.iad3.rackspace.com"
-    - name: bond1
-      type: manual
-      directives:
-        - "up ip link set $IFACE up"
-        - "down ip link set $IFACE down"
-        - "bond-slaves none"
-        - "bond-mode active-backup"
-        - "bond-miimon 100"
-        - "bond-downdelay 250"
-        - "bond-updelay 250"
-    - name: bond0.801
-      type: manual
-      directives:
-        - "vlan-raw-device bond0"
-    - name: bond1.790
-      type: manual
-      directives:
-        - "vlan-raw-device bond1"
-    - name: br-mgmt
-      type: static
-      directives:
-        - "bridge_stp off"
-        - "bridge_waitport 0"
-        - "bridge_fd 0"
-        - "bridge-ports bond0.801"
-        - "address 192.168.10.{{member_number}}/22"
-        - "dns-nameservers 69.20.0.164 69.20.0.196"
-    - name: br-vxlan
-      type: static
-      directives:
-        - "bridge_stp off"
-        - "bridge_waitport 0"
-        - "bridge_fd 0"
-        - "bridge_ports bond1.790"
-        - "address 172.29.241.{{member_number}}/22"
-    - name: br-vlan
-      type: manual
-      directives:
-        - "up ip link set $IFACE up"
-        - "down ip link set $IFACE down"
-        - "bridge_stp off"
-        - "bridge_fd 0"
-        - "bridge_maxwait 0"
-        - "bridge_ports bond1"
-    - name: br-snet
-      type: static
-      directives:
-        - "bridge_stp off"
-        - "bridge_fd 0"
-        - "bridge_maxwait 0"
-        - "bridge_ports none"
-        - "address 172.29.236.1"
-        - "netmask 255.255.252.0"
+      volume_driver: cinder.volume.drivers.lvm.LVMISCSIDriver
+      volume_backend_name: LVM_iSCSI
