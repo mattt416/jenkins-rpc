@@ -1,0 +1,18 @@
+[all]
+605076-storage01 ansible_ssh_host=10.240.0.144 ansible_ssh_user=root member_number=144
+605077-storage02 ansible_ssh_host=10.240.0.145 ansible_ssh_user=root member_number=145
+605078-storage03 ansible_ssh_host=10.240.0.146 ansible_ssh_user=root member_number=146
+605079-storage04 ansible_ssh_host=10.240.0.147 ansible_ssh_user=root member_number=147
+605080-storage05 ansible_ssh_host=10.240.0.148 ansible_ssh_user=root member_number=148
+
+[infrastructure]
+605076-storage01
+605077-storage02
+605078-storage03
+
+[swift]
+605076-storage01 zone=1
+605077-storage02 zone=2
+605078-storage03 zone=3
+605079-storage04 zone=4
+605080-storage05 zone=5

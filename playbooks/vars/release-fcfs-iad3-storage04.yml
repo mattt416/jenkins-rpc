@@ -1,0 +1,149 @@
+---
+config_prefix: openstack
+repo_dir: openstack-ansible
+
+user_config:
+  container_cidr: 192.168.2.0/24
+  storage_cidr:  192.168.1.0/24
+  used_ips:
+    - "192.168.2.1,192.168.2.15"
+    - "192.168.1.144,192.168.1.148"
+    - "192.168.2.144,192.168.2.148"
+  internal_lb_vip_address: 192.168.2.10
+  external_lb_vip_address: 72.4.117.93
+  container_bridge: br-mgmt
+  lb_name: 605010-lbal1.iad3.rpchost.com
+  networking:
+    - name: container
+      bridge: br-mgmt
+      container_bridge: br-mgmt
+      container_interface: eth1
+      container_type: veth
+      ip_from_q: container
+      type: raw
+      is_ssh_address: true
+      is_container_address: true
+      group_binds:
+        - all_containers
+        - hosts
+    - name: storage
+      bridge: br-storage
+      container_interface: eth2
+      container_type: veth
+      ip_from_q: storage
+      type: raw
+      group_binds:
+        - swift_proxy
+
+swift_config:
+  vg: swift-volumes
+  part_power: 8
+  weight: 100
+  min_part_hours: 1
+  repl_number: 3
+  storage_network: 'br-storage'
+  replication_network: 'br-storage'
+  drives:
+    - name: swift1
+    - name: swift2
+    - name: swift3
+    - name: swift4
+    - name: swift5
+  lv_size: 50G
+  mount_point: /mnt
+  mount_opts: 'noatime,nodiratime,nobarrier,logbufs=8,nobootwait'
+  account: 'service:glance'
+  container: glance
+  storage_policies:
+    - name: gold
+      index: 0
+      default: True
+    - name: silver
+      index: 1
+      repl_number: 3
+      depreciated: True
+
+# all networking interface configs
+networking:
+  - name: lo
+    type: loopback
+  - name: p3p1
+    type: manual
+    directives:
+      - "bond-master bond0"
+      - "bond-primary p3p1"
+  - name: p4p1
+    type: manual
+    directives:
+      - "bond-master bond0"
+  - name: bond0
+    type: static
+    directives:
+      - "bond-slaves p3p1 p4p1"
+      - "bond-mode active-backup"
+      - "bond-miimon 100"
+      - "bond-downdelay 200"
+      - "bond-updelay 200"
+      - "address {{ ansible_default_ipv4.address }}"
+      - "netmask {{ ansible_default_ipv4.netmask }}"
+      - "gateway {{ ansible_default_ipv4.gateway }}"
+      - "dns-nameservers 69.20.0.164 69.20.0.196"
+      - "dns-search eng1.lon3.rackspace.com"
+  - name: p3p2
+    type: manual
+    directives:
+      - "bond-master bon1"
+      - "bond-primary p3p2"
+  - name: p4p2
+    type: manual
+    directives:
+      - "bond-master bond1"
+  - name: bond1
+    type: manual
+    directives:
+      - "bond-slaves p3p2 p4p2"
+      - "bond-mode active-backup"
+      - "bond-miimon 100"
+      - "bond-downdelay 250"
+      - "bond-updelay 250"
+  - name: bond1.1821
+    type: manual
+    directives:
+      - "vlan-raw-device bond1"
+  - name: br-storage
+    type: static
+    directives:
+      - "bridge_stp off"
+      - "bridge_waitport 0"
+      - "bridge_fd 0"
+      - "bridge_ports bond1.1821"
+      - "address 192.168.1.{{ member_number }}"
+      - "netmask 255.255.255.0"
+  - name: bond0.2074
+    type: manual
+    directives:
+      - "vlan-raw-device bond0"
+  - name: br-mgmt
+    type: static
+    directives:
+      - "bridge_stp off"
+      - "bridge_waitport 0"
+      - "bridge_fd 0"
+      - "bridge_ports bond0.2074"
+      - "address 192.168.2.{{ member_number }}"
+      - "netmask 255.255.255.0"
+      - "dns-nameservers 69.20.0.164 69.20.0.196"
+  - name: em3
+    type: static
+    directives:
+      - "address {{ ansible_em3.ipv4.address }}"
+      - "netmask {{ ansible_em3.ipv4.netmask }}"
+      - "post-up ip route add 10.191.192.0/18 via 10.136.157.225 dev em3"
+
+# volume groups for cinder / swift
+vgs:
+  - name: swift-volumes
+    device:
+      - /dev/sdb
+      - /dev/sdc
+      - /dev/sdd

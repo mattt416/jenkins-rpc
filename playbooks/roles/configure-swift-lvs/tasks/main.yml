@@ -1,12 +1,11 @@
 ---
-- name: Ensure xfsprogs package is installed
+- name: Install xfsprogs
   apt:
-    pkg: "xfsprogs"
+    name: xfsprogs
     state: present
     update_cache: yes
-    cache_valid_time: 600
 
-- name: Create LVs for Swift
+- name: Create Swift logical volumes
   lvol:
     vg: "{{ swift_config.vg }}"
     lv: "{{ item.name }}"
@@ -14,21 +13,18 @@
     force: yes
   with_items: swift_config.drives
 
-- name: Create swift mount dirs
-  file:
-    state: directory
-    path: "{{ swift_config.mount_point }}/{{ item.name }}"
+- name: Create and expand Swift's XFS filesystems
+  filesystem:
+    fstype: xfs
+    dev: /dev/{{ swift_config.vg }}/{{ item.name }}
+    #TODO(jpmontez): Add when Ansible 2.0 is released - resizefs: yes
   with_items: swift_config.drives
 
-- name: mkfs.xfs swift partitions
-  shell: "xfs_info /dev/{{ swift_config.vg }}/{{ item.name }} || mkfs.xfs -f /dev/{{ swift_config.vg }}/{{ item.name }}"
-  with_items: swift_config.drives
-
-- name: Mount swift partitions
-  mount: 
+- name: Mount Swift partitions
+  mount:
+    name: "{{ swift_config.mount_point }}/{{ item.name }}"
+    src: /dev/{{ swift_config.vg }}/{{ item.name }}
+    opts: "{{ swift_config.mount_opts }}"
     state: mounted
     fstype: xfs
-    src: "/dev/{{ swift_config.vg }}/{{ item.name }}"
-    name: "{{ swift_config.mount_point }}/{{ item.name }}"
   with_items: swift_config.drives
-
