@@ -9,11 +9,6 @@
 569058-storage01 ansible_ssh_host=10.240.0.164 ansible_ssh_user=root member_number=164
 573954-storage02 ansible_ssh_host=10.240.0.168 ansible_ssh_user=root member_number=168
 573955-storage03 ansible_ssh_host=10.240.0.169 ansible_ssh_user=root member_number=169
-578094-storage01 ansible_ssh_host=10.240.0.185 ansible_ssh_user=root member_number=185
-578095-storage02 ansible_ssh_host=10.240.0.186 ansible_ssh_user=root member_number=186
-578096-storage03 ansible_ssh_host=10.240.0.187 ansible_ssh_user=root member_number=187
-578097-storage04 ansible_ssh_host=10.240.0.188 ansible_ssh_user=root member_number=188
-578098-storage05 ansible_ssh_host=10.240.0.189 ansible_ssh_user=root member_number=189
 
 [deployment]
 568575-infra01
@@ -45,9 +40,11 @@
 [logger]
 569039-logging01
 
+# This is a stand alone environment that is used as ceph storage
+# Its networking is different so it doesnt belong in all
 [ceph]
-578094-storage01
-578095-storage02
-578096-storage03
-578097-storage04
-578098-storage05
+578094-storage01 ansible_ssh_host=10.240.0.185 ansible_ssh_user=root member_number=185
+578095-storage02 ansible_ssh_host=10.240.0.186 ansible_ssh_user=root member_number=186
+578096-storage03 ansible_ssh_host=10.240.0.187 ansible_ssh_user=root member_number=187
+578097-storage04 ansible_ssh_host=10.240.0.188 ansible_ssh_user=root member_number=188
+578098-storage05 ansible_ssh_host=10.240.0.189 ansible_ssh_user=root member_number=189
