@@ -38,7 +38,7 @@ networking:
       - "netmask {{ ansible_default_ipv4.netmask }}"
       - "gateway {{ ansible_default_ipv4.gateway }}"
       - "dns-nameservers 69.20.0.164 69.20.0.196"
-      - "dns-search fcfs-iad3-storage-3.rackspace.com"
+      - "dns-search fcfs-iad3-storage-1.rackspace.com"
   - name: bond1
     type: manual
     directives:
