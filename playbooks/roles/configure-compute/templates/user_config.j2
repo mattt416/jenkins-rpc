@@ -19,8 +19,10 @@ cidr_networks:
   # Cidr used in the Management network
   container: {{ user_config.container_cidr }}
 
+  {% if user_config.tunnel_cidr is defined %}
   # Cider used for the VM network
   tunnel: {{ user_config.tunnel_cidr }}
+  {% endif %}
 
 {% if user_config.service_cidr is defined %}
   # Cidr used for the service network
@@ -48,8 +50,10 @@ global_overrides:
   # External DMZ VIP address
   external_lb_vip_address: {{ user_config.external_lb_vip_address }}
 
+  {% if user_config.tunnel_bridge is defined %}
   # Bridged interface to use with tunnel type networks
   tunnel_bridge: "{{ user_config.tunnel_bridge }}"
+  {% endif %}
 
   # Bridged interface to build containers with
   management_bridge: "{{ user_config.container_bridge }}"
@@ -106,11 +110,13 @@ os-infra_hosts:
 {% endfor %}
 
 # Storage Infrastructure Parts
+{% if cinder is defined %}
 storage-infra_hosts:
 {% for host in infra %}
   {{ host }}:
     ip: {{ hostvars[host]["ansible_ssh_host"] }}
 {% endfor %}
+{% endif %}
 
 # Keystone Identity Infrastructure Parts
 identity_hosts:
@@ -120,20 +126,25 @@ identity_hosts:
 {% endfor %}
 
 # User defined Network Hosts, this should be a required group
+{% if network is defined %}
 network_hosts:
 {% for host in network %}
   {{ host }}:
     ip: {{ hostvars[host]["ansible_ssh_host"] }}
 {% endfor %}
+{% endif %}
 
 # User defined Compute Hosts, this should be a required group
+{% if compute  is defined %}
 compute_hosts:
 {% for host in compute %}
   {{ host }}:
     ip: {{ hostvars[host]["ansible_ssh_host"] }}
 {% endfor %}
+{% endif %}
 
 # User defined Cinder Hosts, this should be a required group
+{% if cinder is defined %}
 storage_hosts:
 {% for host in cinder %}
   {{ host }}:
@@ -165,13 +176,16 @@ storage_hosts:
           volume_backend_name: {{ cinder_storage.backends.netapp.volume_backend_name }}
 {% endif %}
 {% endfor %}
+{% endif %}
 
 # User defined Logger Hosts, this should be a required group
+{% if logger is defined %}
 log_hosts:
 {% for host in logger %}
   {{ host }}:
     ip: {{ hostvars[host]["ansible_ssh_host"] }}
 {% endfor %}
+{% endif %}
 
 # User defined Repo Infrastructure Hosts, this is an optional group
 repo-infra_hosts:

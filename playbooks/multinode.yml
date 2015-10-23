@@ -45,6 +45,7 @@
   tags:
     - nightly
     - commit
+    - prepare
   roles:
     - volumes
 
@@ -54,6 +55,7 @@
   tags:
     - nightly
     - commit
+    - prepare
   roles:
     - configure-swift-lvs
 
