@@ -1,0 +1,41 @@
+---
+## Zero out disk
+## Create mount directorys
+## Mount devices
+## Add mount to fstab
+
+- name: Ensure xfsprogs package is installed
+  apt:
+    pkg: "xfsprogs"
+    state: present
+    update_cache: yes
+    cache_valid_time: 600
+
+- name: Create swift mount dirs
+  file:
+    state: directory
+    path: "{{ swift_config.mount_point }}/{{ item.name }}"
+  with_items: swift_config.drives
+
+- name: Make XFS file system on drives
+  filesystem:
+    fstype: xfs
+    dev: "/dev/{{ item.name }}"
+    force: yes
+  with_items: swift_config.drives
+
+- name: Mount swift partitions
+  mount: 
+    state: mounted
+    fstype: xfs
+    src: "/dev/{{ item.name }}"
+    name: "{{ swift_config.mount_point }}/{{ item.name }}"
+  with_items: swift_config.drives
+
+- name: update fstab entries
+  lineinfile:
+    dest: /etc/fstab
+    regexp: "^/dev/{{ item.name }}"
+    line: "LABEL={{ item.name }} {{ swift_config.mount_point }}/{{ item.name }} xfs noatime,nodiratime,nobarrier,logbufs=8,nobootwait 0 0"
+    state: present
+  with_items: swift_config.drives

@@ -20,6 +20,7 @@
   gather_facts: no
   tags:
     - prepare
+    - packages
   roles:
     - packages
 
@@ -28,6 +29,7 @@
   gather_facts: no
   tags:
     - prepare
+    - pip
   roles:
     - pip
 
@@ -36,16 +38,17 @@
   gather_facts: yes
   tags:
     - prepare
+    - networking
   roles:
     - networking
 
-- hosts: all
+- hosts: cinder
   user: root
   gather_facts: yes
   tags:
     - nightly
     - commit
-    - prepare
+    - cinder-volume
   roles:
     - volumes
 
@@ -55,15 +58,24 @@
   tags:
     - nightly
     - commit
-    - prepare
+    - configure-swift-lvs
   roles:
     - configure-swift-lvs
+
+- hosts: swift
+  user: root
+  gather_facts: yes
+  tags:
+    - configure-swift-disks
+  roles:
+    - configure-swift-disks
 
 - hosts: infrastructure[0]
   user: root
   gather_facts: no
   tags:
     - prepare
+    - git
   roles:
     - setup-git
 
@@ -72,6 +84,7 @@
   gather_facts: no
   tags:
     - prepare
+    - bootstrap-ansible
   roles:
     - role: run-script-from-openstack-ansible
       script_name: bootstrap-ansible
@@ -81,9 +94,10 @@
   gather_facts: no
   tags:
     - prepare
+    - configure-osa
   roles:
     - configure-compute
-    - configure-storage
+    - configure-swift
 
 - hosts: infrastructure[0]
   user: root
@@ -93,11 +107,19 @@
   roles:
     - configure-rpc
 
+- hosts: infrastructure[0]
+  user: root
+  gather_facts: no
+  tags:
+    - rpc-ceph
+  roles:
+    - configure-ceph
+
 - hosts: all
   user: root
   gather_facts: no
   tags:
-    - prepare
+    - reboot
   roles:
     - reboot
 

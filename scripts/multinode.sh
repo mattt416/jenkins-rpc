@@ -34,6 +34,10 @@ DEPLOY_MAAS=${DEPLOY_MAAS:-"no"}
 DEPLOY_HAPROXY=${DEPLOY_HAPROXY:-"yes"}
 DEPLOY_TEMPEST=${DEPLOY_TEMPEST:-"yes"}
 
+# RPC Variables
+RPC_FEATURES=${RPC_FEATURES:()}
+ANSIBLE_RPC_FEATURES=${ANSIBLE_RPC_FEATURES:""}
+
 # Product Config Variables
 CONFIG_PREFIX=${CONFIG_PREFIX:-openstack}
 TEMPEST_SCRIPT_PARAMETERS=${TEMPEST_SCRIPT_PARAMETERS:-api}
@@ -42,6 +46,7 @@ TEMPEST_SCRIPT_PARAMETERS=${TEMPEST_SCRIPT_PARAMETERS:-api}
 ANSIBLE_FORCE_COLOR=${ANSIBLE_FORCE_COLOR:-1}
 ANSIBLE_OPTIONS=${ANSIBLE_OPTIONS:-"-v"}
 FORKS=${FORKS:-10}
+SLEEP_TIME=${SLEEP_TIME:-180}
 
 function find_infra01 {
   # Find the deployment node's IP address within a lab's inventory file
@@ -67,10 +72,15 @@ function run_tag {
   export ANSIBLE_FORCE_COLOR
   local tag="$1"
 
+  # Convert list of RPC features to ansible tag syntax
+  if [[ $PRODUCT == "rpc-openstack" ]]; then
+    convert_rpc_features
+  fi
+
   env
 
   if [[ ${tag} == "prepare" ]]; then
-    echo "Running tag ${tag} from multinode.yml with tags: ${tag}, ${PRODUCT}, and ${LAB_PREFIX}."
+    echo "Running tag ${tag} from multinode.yml with tags: ${tag}, ${PRODUCT}, ${ANSIBLE_RPC_FEATURES} and ${LAB_PREFIX}."
     ansible-playbook \
       --inventory-file="inventory/${LAB_PREFIX}-${LAB}" \
       --extra-vars="@vars/${LAB_PREFIX}-${LAB}.yml" \
@@ -79,9 +89,9 @@ function run_tag {
       --extra-vars="product_url=${PRODUCT_URL}" \
       --extra-vars="product_branch=${PRODUCT_BRANCH}" \
       --extra-vars="config_prefix=${CONFIG_PREFIX}" \
-      --tags="${tag},${PRODUCT},${LAB_PREFIX}" \
+      --tags="${tag},${PRODUCT},${LAB_PREFIX},${ANSIBLE_RPC_FEATURES}" \
       "$ANSIBLE_OPTIONS" \
-      multinode.yml
+      multinode.yml 
   else
     echo "Running tag ${tag} from multinode.yml"
     ansible-playbook \
@@ -98,6 +108,15 @@ function run_tag {
   fi
 }
 
+function convert_rpc_features {
+  for feature in "${RPC_FEATURES[@]}"
+  do
+    ANSIBLE_RPC_FEATURES+="$feature,"
+  done
+  # remove trailing ,
+  ANSIBLE_RPC_FEATURES="${ANSIBLE_RPC_FEATURES%?}"
+}
+
 function run_script {
   local script="$1"
 
@@ -112,15 +131,15 @@ function run_script {
 }
 
 function prepare {
-  echo "Sleep 3 minutes for reboot"
-  sleep 180
+  echo "Sleep $SLEEP_TIME seconds for reboot"
+  sleep $SLEEP_TIME
 
   run_tag prepare
 }
 
 function run {
-  echo "Sleep 3 minutes for reboot"
-  sleep 180
+  echo "Sleep $SLEEP_TIME seconds for reboot"
+  sleep $SLEEP_TIME
 
   echo "export DEPLOY_MAAS=${DEPLOY_MAAS}" > script_env
   echo "export DEPLOY_HAPROXY=${DEPLOY_HAPROXY}" >> script_env
@@ -183,6 +202,10 @@ function main {
 
     if [[ "${LAB_PREFIX}" == "release" ]]; then
       DEPLOY_HAPROXY="no"
+    fi
+
+    if [[ "${LAB}" == "qe-iad3-lab01" ]]; then
+      RPC_FEATURES+="rpc-ceph"
     fi
 
   elif [[ "${PRODUCT}" == "openstack-ansible" ]]; then
