@@ -3,7 +3,7 @@
   pip: requirements={{ oa_repo_dir }}/requirements.txt
 
 - name: Create OA configuration directory
-  file: 
+  file:
     path: /etc/{{ config_prefix }}_deploy/
     state: directory
     mode: 0755

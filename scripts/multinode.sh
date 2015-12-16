@@ -91,7 +91,7 @@ function run_tag {
       --extra-vars="config_prefix=${CONFIG_PREFIX}" \
       --tags="${tag},${PRODUCT},${LAB_PREFIX},${ANSIBLE_RPC_FEATURES}" \
       "$ANSIBLE_OPTIONS" \
-      multinode.yml 
+      multinode.yml
   else
     echo "Running tag ${tag} from multinode.yml"
     ansible-playbook \
