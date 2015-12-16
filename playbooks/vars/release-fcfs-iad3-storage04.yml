@@ -1,17 +1,18 @@
 ---
 config_prefix: openstack
 repo_dir: openstack-ansible
+standalone_swift: true
 
 user_config:
-  container_cidr: 192.168.2.0/24
+  container_cidr: 172.20.236.0/22
   storage_cidr:  172.30.244.0/22
   repl_cidr: 192.168.1.0/24
   used_ips:
-    - "192.168.2.1,192.168.2.15"
-    - "192.168.2.144,192.168.2.148"
+    - "172.20.236.1,172.20.236.15"
+    - "172.20.236.144,172.20.236.148"
     - "172.30.244.144,172.30.244.148"
     - "192.168.1.144,192.168.1.148"
-  internal_lb_vip_address: 192.168.2.10
+  internal_lb_vip_address: 172.20.236.10
   external_lb_vip_address: 72.4.117.93
   container_bridge: br-mgmt
   lb_name: 605010-lbal1.iad3.rpchost.com
@@ -28,6 +29,9 @@ user_config:
       group_binds:
         - all_containers
         - hosts
+      static_routes:
+        - cidr: "172.20.136.0/22"
+          gateway: "172.20.236.1"
     - name: storage
       bridge: br-storage
       container_interface: eth2
@@ -59,8 +63,9 @@ swift_config:
   vg: swift-volumes
   part_power: 8
   weight: 100
-  min_part_hours: 1
   repl_number: 3
+  min_part_hours: 1
+  region: 2
   storage_network: 'br-storage'
   replication_network: 'br-repl'
   drives:
@@ -146,9 +151,10 @@ networking:
       - "bridge_waitport 0"
       - "bridge_fd 0"
       - "bridge_ports bond0.2074"
-      - "address 192.168.2.{{ member_number }}"
-      - "netmask 255.255.255.0"
+      - "address 172.20.236.{{ member_number }}/22"
       - "dns-nameservers 69.20.0.164 69.20.0.196"
+      # Add the routes
+      - "post-up ip route add 172.20.136.0/22 via 172.20.236.1"
   - name: br-storage
     type: static
     directives:

@@ -74,7 +74,7 @@ global_overrides:
         static_routes:
 {% for static_route in network.static_routes %}
           - cidr: "{{ static_route.cidr }}"
-            gateway: "{{ static_route.gatway }}"
+            gateway: "{{ static_route.gateway }}"
 {% endfor %}
 {% endif %}
         container_bridge: "{{ network.bridge }}"
@@ -114,11 +114,13 @@ shared-infra_hosts:
 {% endfor %}
 
 # Openstack Compute Infrastructure Parts
+{% if standalone_swift is not defined %}
 os-infra_hosts:
 {% for host in infra %}
   {{ host }}:
     ip: {{ hostvars[host]["ansible_ssh_host"] }}
 {% endfor %}
+{% endif %}
 
 # Storage Infrastructure Parts
 {% if cinder is defined %}
