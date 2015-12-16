@@ -12,26 +12,30 @@
 # this will ensure consistency when deploying.
 environment_version: {{ environment_version.stat.md5 }}
 
-
 # User defined CIDR used for containers
 # Global cidr/s used for everything.
 cidr_networks:
-  # Cidr used in the Management network
+  # CIDR used in the Management network
   container: {{ user_config.container_cidr }}
 
-  {% if user_config.tunnel_cidr is defined %}
-  # Cider used for the VM network
+{% if user_config.tunnel_cidr is defined %}
+  # CIDR used for the VM network
   tunnel: {{ user_config.tunnel_cidr }}
-  {% endif %}
+{% endif %}
 
 {% if user_config.service_cidr is defined %}
-  # Cidr used for the service network
+  # CIDR used for the service network
   snet: {{ user_config.service_cidr}}
 {% endif %}
 
 {% if user_config.storage_cidr is defined %}
-  # Cidr used for the storage network
+  # CIDR used for the storage network
   storage: {{ user_config.storage_cidr }}
+{% endif %}
+
+{% if user_config.repl_cidr is defined %}
+  # CIDR used for the replication network
+  repl: {{ user_config.repl_cidr }}
 {% endif %}
 
 {% if user_config.used_ips is defined %}
@@ -66,6 +70,13 @@ global_overrides:
 {% for group_bind in network.group_binds %}
           - {{ group_bind }}
 {% endfor %}
+{% if network.static_routes is defined %}
+        static_routes:
+{% for static_route in network.static_routes %}
+          - cidr: "{{ static_route.cidr }}"
+            gateway: "{{ static_route.gatway }}"
+{% endfor %}
+{% endif %}
         container_bridge: "{{ network.bridge }}"
         container_interface: "{{ network.container_interface }}"
         type: "{{ network.type }}"

@@ -4,11 +4,13 @@ repo_dir: openstack-ansible
 
 user_config:
   container_cidr: 192.168.2.0/24
-  storage_cidr:  192.168.1.0/24
+  storage_cidr:  172.30.244.0/22
+  repl_cidr: 192.168.1.0/24
   used_ips:
     - "192.168.2.1,192.168.2.15"
-    - "192.168.1.144,192.168.1.148"
     - "192.168.2.144,192.168.2.148"
+    - "172.30.244.144,172.30.244.148"
+    - "192.168.1.144,192.168.1.148"
   internal_lb_vip_address: 192.168.2.10
   external_lb_vip_address: 72.4.117.93
   container_bridge: br-mgmt
@@ -33,7 +35,25 @@ user_config:
       ip_from_q: storage
       type: raw
       group_binds:
+        - glance_api
+        - cinder_api
+        - cinder_volume
+        - nova_compute
         - swift_proxy
+      static_routes:
+        - cidr: "172.31.244.0/22"
+          gateway: "172.30.244.1"
+    - name: replication
+      bridge: br-repl
+      container_interface: eth13
+      container_type: veth
+      ip_from_q: repl
+      type: raw
+      group_binds:
+        - swift_proxy
+      static_routes:
+        - cidr: "192.168.3.0/24"
+          gateway: "192.168.1.1"
 
 swift_config:
   vg: swift-volumes
@@ -42,7 +62,7 @@ swift_config:
   min_part_hours: 1
   repl_number: 3
   storage_network: 'br-storage'
-  replication_network: 'br-storage'
+  replication_network: 'br-repl'
   drives:
     - name: swift1
     - name: swift2
@@ -92,7 +112,7 @@ networking:
   - name: p3p2
     type: manual
     directives:
-      - "bond-master bon1"
+      - "bond-master bond1"
       - "bond-primary p3p2"
   - name: p4p2
     type: manual
@@ -106,20 +126,16 @@ networking:
       - "bond-miimon 100"
       - "bond-downdelay 250"
       - "bond-updelay 250"
-  - name: bond1.1821
+  - name: bond0.1821
     type: manual
     directives:
-      - "vlan-raw-device bond1"
-  - name: br-storage
-    type: static
-    directives:
-      - "bridge_stp off"
-      - "bridge_waitport 0"
-      - "bridge_fd 0"
-      - "bridge_ports bond1.1821"
-      - "address 192.168.1.{{ member_number }}"
-      - "netmask 255.255.255.0"
+      - "vlan-raw-device bond0"
   - name: bond0.2074
+    type: manual
+    directives:
+      - "vlan-raw-device bond0"
+  # Storage network VLAN interface (optional)
+  - name: bond0.2100
     type: manual
     directives:
       - "vlan-raw-device bond0"
@@ -133,6 +149,36 @@ networking:
       - "address 192.168.2.{{ member_number }}"
       - "netmask 255.255.255.0"
       - "dns-nameservers 69.20.0.164 69.20.0.196"
+  - name: br-storage
+    type: static
+    directives:
+      - "bridge_stp off"
+      - "bridge_waitport 0"
+      - "bridge_fd 0"
+      - "bridge_ports bond0.2100"
+      - "address 172.30.244.{{ member_number }}"
+      # Add the routes
+      - "post-up ip route add 172.31.244.0/22 via 172.30.244.1"
+      - "netmask 255.255.252.0"
+  - name: br-repl
+    type: static
+    directives:
+      - "bridge_stp off"
+      - "bridge_waitport 0"
+      - "bridge_fd 0"
+      - "address 192.168.1.{{ member_number }}"
+      - "netmask 255.255.255.0"
+      # Create veth pair, ignore if already exists
+      - "pre-up ip link add br-repl-veth type veth peer name eth13 || true"
+      # Set both ends UP
+      - "pre-up ip link set eth13 up"
+      - "pre-up ip link set br-repl-veth up"
+      # Add the routes
+      - "post-up ip route add 192.168.3.0/24 via 192.168.1.1"
+      # Delete veth pair on DOWN
+      - "post-down ip link del br-repl-veth || true"
+      # Bridge port reference tagged interface
+      - "bridge_ports bond0.1821 br-repl-veth"
   - name: em3
     type: static
     directives:

@@ -7,7 +7,9 @@ global_overrides:
         weight: {{ swift_config.weight }}
         min_part_hours: {{ swift_config.min_part_hours }}
         repl_number: {{ swift_config.min_part_hours }}
+{% if swift_config.storage_network is defined %}
         storage_network: '{{ swift_config.storage_network }}'
+{% endif %}
 {% if swift_config.replication_network is defined %}
         replication_network: '{{ swift_config.replication_network }}'
 {% endif %}
