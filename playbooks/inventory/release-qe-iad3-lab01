@@ -19,6 +19,7 @@
 569038-infra03
 
 [network]
+568575-infra01
 569037-infra02
 569038-infra03
 
@@ -39,12 +40,3 @@
 
 [logger]
 569039-logging01
-
-# This is a stand alone environment that is used as ceph storage
-# Its networking is different so it doesnt belong in all
-[ceph]
-578094-storage01 ansible_ssh_host=10.240.0.185 ansible_ssh_user=root member_number=185
-578095-storage02 ansible_ssh_host=10.240.0.186 ansible_ssh_user=root member_number=186
-578096-storage03 ansible_ssh_host=10.240.0.187 ansible_ssh_user=root member_number=187
-578097-storage04 ansible_ssh_host=10.240.0.188 ansible_ssh_user=root member_number=188
-578098-storage05 ansible_ssh_host=10.240.0.189 ansible_ssh_user=root member_number=189
