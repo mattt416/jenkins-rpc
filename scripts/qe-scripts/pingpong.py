@@ -27,7 +27,9 @@ if __name__ == "__main__":
         sys.exit(2)
     for opt, arg in opts:
         if opt in ('-h', '--help'):
-            "blablabla"
+            print "how to use it? -c for # ping request times, -p for the log path, "
+            print "defaul times is infinite loop for ping request and default path is /var/log"
+            print "ctrl + c to quit the app and will kill all ping process."
             sys.exit(2)
         elif opt in ('-c', '--count'):
             count = "-c " + arg
