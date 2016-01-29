@@ -31,9 +31,9 @@
 627563-storage03
 
 [swift]
-627559-storage01 zone=1
-627562-storage02 zone=2
-627563-storage03 zone=3
+627559-storage01 zone=6
+627562-storage02 zone=7
+627563-storage03 zone=8
 
 [logger]
 627555-logging01

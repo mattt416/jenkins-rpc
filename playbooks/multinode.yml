@@ -48,6 +48,7 @@
   tags:
     - nightly
     - commit
+    - prepare
     - cinder-volume
   roles:
     - volumes
@@ -58,6 +59,7 @@
   tags:
     - nightly
     - commit
+    - prepare
     - configure-swift-lvs
   roles:
     - configure-swift-lvs
@@ -138,16 +140,16 @@
   tags:
     - cleanup
     - rekick
-  gather_facts: no
   roles:
     - teardown-containers
+    - teardown-pip
+    - cleanup-host
 
 - hosts: compute
   user: root
   tags:
     - cleanup
     - rekick
-  gather_facts: no
   roles:
     - teardown-compute-node
 
@@ -156,27 +158,8 @@
   tags:
     - cleanup
     - rekick
-  gather_facts: no
   roles:
     - teardown-swift-node
-
-- hosts: all
-  user: root
-  tags:
-    - cleanup
-    - rekick
-  gather_facts: no
-  roles:
-    - teardown-pip
-
-- hosts: all
-  user: root
-  tags:
-    - cleanup
-    - rekick
-  gather_facts: no
-  roles:
-    - cleanup-host
 
 ## --------- [ Rekick Cluster ] ------------------
 - hosts: cinder
