@@ -1,49 +1,88 @@
-__author__ = 'weez8031'
-#ping function default interval is 1 sec, -c can be use for how many counts.
+#!/usr/bin/env python
 
-import subprocess, threading, getopt, sys
+import argparse
+import threading
+import subprocess
+
+
+def args():
+    """Setup argument Parsing."""
+    parser = argparse.ArgumentParser(
+        usage='%(prog)s',
+        description='Internet Protocol Address ICMP Tester',
+        epilog='Internet Protocol Address ICMP Tester Licensed "Apache 2.0"')
+
+    parser.add_argument(
+        '-f',
+        '--file',
+        help="File with list of IPs",
+        required=True,
+        default='hostname')
+
+    parser.add_argument(
+        '-c',
+        '--count',
+        help='Count of ICMP checks',
+        required=False,
+        type=int,
+        default=None
+    )
+
+    parser.add_argument(
+        '-p',
+        '--path',
+        help='Path to store log file(s)',
+        required=False,
+        default='/tmp/log'
+    )
+
+    return vars(parser.parse_args())
 
 
 class pingPong(threading.Thread):
-    def __init__(self, ip_address, path, count=''):
+    def __init__(self, ipaddress, path, count=''):
         threading.Thread.__init__(self)
-        self.ip_address = ip_address
-        self.path = path + "/" + self.ip_address + '.log'
+        self.ipaddress = ipaddress
+        self.path = path + "/" + self.ipaddress + '.log'
         self.count = count
 
     def run(self):
-        #print self.ip_address
-        #print self.path
-        #print self.count
-        f = open(self.path, "w")
-        subprocess.call("ping " + self.count + " " + self.ip_address + "| while read pong; do echo \"$(date): $pong\"; done", stdout=f, shell=True)
+        print "Running ping with count {0} against ipaddress: {1}".format(
+            self.count, self.ipaddress)
 
-if __name__ == "__main__":
-    count = ''
-    path = '/var/log'
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'c:p:h', ['count=', 'path=', 'help'])
-    except getopt.GetoptError:
-        sys.exit(2)
-    for opt, arg in opts:
-        if opt in ('-h', '--help'):
-            print "how to use it? -c for # ping request times, -p for the log path, "
-            print "defaul times is infinite loop for ping request and default path is /var/log"
-            print "ctrl + c to quit the app and will kill all ping process."
-            sys.exit(2)
-        elif opt in ('-c', '--count'):
-            count = "-c " + arg
-        elif opt in ('-p', '--path'):
-            path = arg
-        else:
-            sys.exit(2)
+        command = "ping "
 
-    with open('hostname', 'r') as f:
+        # Append count if set
+        if self.count is not None:
+            command += "-c {0} ".format(self.count)
+
+        # Append ipaddress
+        command += "{0}".format(self.ipaddress)
+
+        # Run the ping
+        try:
+            f = open(self.path, "w")
+            subprocess.call(command, stdout=f, shell=True)
+            f.close()
+        except (KeyboardInterrupt, SystemExit):
+            raise
+
+
+def main():
+    """Run the main application."""
+
+    # Parse user args
+    user_args = args()
+
+    with open(user_args['file'], 'r') as f:
         read_data = f.read().splitlines()
     f.closed
-    poolSize = len(read_data)
+
     for i in read_data:
-        thread = pingPong(i, path, count)
-        #Start new Threads
+        thread = pingPong(i, user_args['path'], user_args['count'])
+
+        # Start new Threads
         thread.start()
 
+if __name__ == "__main__":
+    main()

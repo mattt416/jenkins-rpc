@@ -4,16 +4,16 @@ swift:
     - swift-account-auditor
     - swift-account-replicator
     - swift-account-reaper
-    - swift-account-server-replicator
+    - swift-account-replicator-server
     - swift-object-server
     - swift-object-auditor
     - swift-object-replicator
     - swift-object-updater
-    - swift-object-server-replicator
+    - swift-object-replicator-server
     - swift-container-server
     - swift-container-auditor
     - swift-container-replicator
     - swift-container-sync
     - swift-container-updater
-    - swift-container-server-replicator
+    - swift-container-replicator-server
     - swift-proxy-server

@@ -31,6 +31,7 @@ UPGRADE_PRODUCT_BRANCH=${UPGRADE_PRODUCT_BRANCH:-master}
 
 ## Deployment Variables
 DEPLOY_MAAS=${DEPLOY_MAAS:-"no"}
+DEPLOY_HOST=${DEPLOY_HOST:-"yes"}
 DEPLOY_HAPROXY=${DEPLOY_HAPROXY:-"yes"}
 DEPLOY_TEMPEST=${DEPLOY_TEMPEST:-"yes"}
 
@@ -45,7 +46,7 @@ TEMPEST_SCRIPT_PARAMETERS=${TEMPEST_SCRIPT_PARAMETERS:-api}
 # Shell Variables
 ANSIBLE_FORCE_COLOR=${ANSIBLE_FORCE_COLOR:-1}
 ANSIBLE_OPTIONS=${ANSIBLE_OPTIONS:-"-v"}
-FORKS=${FORKS:-10}
+FORKS=${FORKS:-250}
 SLEEP_TIME=${SLEEP_TIME:-180}
 
 function find_infra01 {
@@ -60,8 +61,11 @@ function find_infra01 {
 function ssh_command {
   local command="$1"
 
-  echo "export FORKS=${FORKS}" >> script_env
-  echo "export ANSIBLE_FORCE_COLOR=${ANSIBLE_FORCE_COLOR}" >> script_env
+  cat << EOF >> script_env
+export FORKS=${FORKS}
+export ANSIBLE_FORCE_COLOR=${ANSIBLE_FORCE_COLOR}
+export ANSIBLE_PARAMETERS=${ANSIBLE_OPTIONS}
+EOF
   scp script_env "$infra01":/tmp/env
 
   # shellcheck disable=SC2029
@@ -77,10 +81,12 @@ function run_tag {
     convert_rpc_features
   fi
 
+  build_tags
+
   env
 
   if [[ ${tag} == "prepare" ]]; then
-    echo "Running tag ${tag} from multinode.yml with tags: ${tag}, ${PRODUCT}, ${ANSIBLE_RPC_FEATURES} and ${LAB_PREFIX}."
+    echo "Running tag ${tag} from multinode.yml with tags: ${TAGS}"
     ansible-playbook \
       --inventory-file="inventory/${LAB_PREFIX}-${LAB}" \
       --extra-vars="@vars/${LAB_PREFIX}-${LAB}.yml" \
@@ -89,7 +95,7 @@ function run_tag {
       --extra-vars="product_url=${PRODUCT_URL}" \
       --extra-vars="product_branch=${PRODUCT_BRANCH}" \
       --extra-vars="config_prefix=${CONFIG_PREFIX}" \
-      --tags="${tag},${PRODUCT},${LAB_PREFIX},${ANSIBLE_RPC_FEATURES}" \
+      --tags="$TAGS" \
       "$ANSIBLE_OPTIONS" \
       multinode.yml
   else
@@ -105,6 +111,25 @@ function run_tag {
       --tags="${tag}" \
       "$ANSIBLE_OPTIONS" \
       multinode.yml
+  fi
+}
+
+function build_tags {
+  # This is a nasty method that could be done much better: jwagner
+  # We need to create comma seperated no space string of all tags
+  # that we will run, ignoreing empty tag values
+  TAGS=$tag
+
+  if [[ "$PRODUCT" != "" ]]; then
+    TAGS+=",${PRODUCT}"
+  fi
+
+  if [[ "$ANSIBLE_RPC_FEATURES" != "" ]]; then
+    TAGS+=",${ANSIBLE_RPC_FEATURES}"
+  fi
+
+  if [[ "$LAB_PREFIX" != "" ]]; then
+    TAGS+=",${LAB_PREFIX}"
   fi
 }
 
@@ -132,18 +157,21 @@ function run_script {
 
 function prepare {
   echo "Sleep $SLEEP_TIME seconds for reboot"
-  sleep $SLEEP_TIME
+  sleep "$SLEEP_TIME"
 
   run_tag prepare
 }
 
 function run {
   echo "Sleep $SLEEP_TIME seconds for reboot"
-  sleep $SLEEP_TIME
+  sleep "$SLEEP_TIME"
 
-  echo "export DEPLOY_MAAS=${DEPLOY_MAAS}" > script_env
-  echo "export DEPLOY_HAPROXY=${DEPLOY_HAPROXY}" >> script_env
-  echo "export DEPLOY_TEMPEST=${DEPLOY_TEMPEST}" >> script_env
+  cat << EOF > script_env
+export DEPLOY_MAAS=${DEPLOY_MAAS}
+export DEPLOY_HOST=${DEPLOY_HOST}
+export DEPLOY_HAPROXY=${DEPLOY_HAPROXY}
+export DEPLOY_TEMPEST=${DEPLOY_TEMPEST}
+EOF
   run_script "$BUILD_SCRIPT_NAME"
 }
 
