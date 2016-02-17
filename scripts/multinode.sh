@@ -212,6 +212,10 @@ function rekick {
   run_tag rekick
 }
 
+function reboot {
+  run_tag reboot
+}
+
 function cleanup {
   run_tag cleanup
 }

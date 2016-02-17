@@ -13,15 +13,13 @@ user_config:
     container_cidr: 172.29.236.0/22
     tunnel_cidr:  172.29.240.0/22
     storage_cidr:  172.29.244.0/22
-    repl_cidr:
     used_ips:
         - "172.29.236.1,172.29.236.15"
         - "172.29.236.83,172.29.236.127"
         - "172.29.240.83,172.29.240.127"
         - "172.29.244.83,172.29.244.127"
-        - "172.30.244.83,172.30.244.127"
-    internal_lb_vip_address: 172.29.236.108
-    external_lb_vip_address: 172.29.236.108
+    internal_lb_vip_address: 172.29.236.107
+    external_lb_vip_address: 10.127.101.107
     tunnel_bridge: br-vxlan
     container_bridge: br-mgmt
     lb_name:
@@ -110,6 +108,30 @@ ceph_config:
     - /dev/sdb
     - /dev/sdb
     - /dev/sdb
+
+# Swift Config
+swift_config:
+  part_power: 8
+  weight: 100
+  min_part_hours: 1
+  repl_number: 3
+  storage_network: 'br-storage'
+  replication_network: 'br-storage'
+  drives:
+    - name: sdc
+    - name: sdd
+    - name: sde
+  mount_point: /mnt
+  account: "service:glance"
+  container: glance
+  storage_policies:
+    - name: gold
+      index: 0
+      default: True
+    - name: silver
+      index: 1
+      repl_number: 3
+      depreciated: True
 
 # Networking Configuration
 networking:

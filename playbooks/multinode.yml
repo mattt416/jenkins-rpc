@@ -28,7 +28,6 @@
   user: root
   gather_facts: no
   tags:
-    - prepare
     - pip
   roles:
     - pip
