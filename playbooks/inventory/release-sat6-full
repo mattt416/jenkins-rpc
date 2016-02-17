@@ -29,6 +29,7 @@ node89
 node98
 
 [compute]
+node94
 node101
 node108
 node113
@@ -37,15 +38,16 @@ node115
 node116
 node119
 
+[swift]
+node91 zone=1
+node92 zone=2
+node93 zone=3
+
 [cinder]
 node118
 node119
 
-[ceph]
-node91
-node92
-node93
-node94
+[haproxy]
 node107
 
 [logger]
