@@ -41,7 +41,7 @@ create_private_net_subnet() {
     if [[ `neutron net-list | grep private` ]]; then
         echo "Network 'private' exists! Skipping..."
     else
-        neutron net-create private --provider:network_type=vxlan                                 --provider:segmentation_id=1      --router:external=False --shared
+        neutron net-create private --provider:network_type=vxlan --provider:segmentation_id=1 --router:external=False --shared
         neutron subnet-create private 172.31.0.0/24 --name private-subnet --gateway 172.31.0.1 --dns-nameservers list=true 8.8.8.8 8.8.4.4
     fi
 }
