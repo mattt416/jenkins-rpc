@@ -7,7 +7,9 @@ global_overrides:
       weight: {{ swift_config.weight }}
       repl_number: {{ swift_config.repl_number }}
       min_part_hours: {{ swift_config.min_part_hours }}
-      region: '{{ swift_config.region }}'
+{% if swift_config.region is defined %}
+      region: {{ swift_config.region }}
+{% endif %}
 {% if swift_config.storage_network is defined %}
       storage_network: '{{ swift_config.storage_network }}'
 {% endif %}
@@ -55,5 +57,7 @@ swift_hosts:
       container_vars:
         swift_vars:
           zone: {{ hostvars[host]["zone"] }}
-          region: '{{ swift_config.region }}'
+{% if swift_config.region is defined %}
+          region: {{ swift_config.region }}
+{{% endif %}}
 {% endfor %}
