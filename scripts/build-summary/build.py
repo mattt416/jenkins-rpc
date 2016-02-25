@@ -92,11 +92,23 @@ class Build(object):
             self.ceilometer_user_not_found(lines)
             self.dpkg_locked(lines)
             self.maas_alarm(lines)
+            self.setup_tools_sql_alchemy(lines)
             # if not self.failures:
             #    self.deploy_rc(lines)
 
         if not self.failures:
             self.failures.append("Unknown Failure")
+
+    def setup_tools_sql_alchemy(self, lines):
+        match_str = ("error in SQLAlchemy-Utils setup command: "
+                     "'extras_require' must be a dictionary")
+        for i, line in enumerate(lines):
+            if match_str in line:
+                previous_task = self.get_previous_task(i, lines)
+                self.failures.append(
+                    "Setup Tools / SQL Alchemy Fail. PrevTask: {task}".format(
+                        task=previous_task))
+                break
 
     def maas_alarm(self, lines):
         match_str = 'Checks and Alarms with failures:'
