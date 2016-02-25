@@ -17,27 +17,22 @@ environment_version: {{ environment_version.stat.md5 }}
 cidr_networks:
   # CIDR used in the Management network
   container: {{ user_config.container_cidr }}
-
 {% if user_config.tunnel_cidr is defined %}
   # CIDR used for the VM network
   tunnel: {{ user_config.tunnel_cidr }}
 {% endif %}
-
 {% if user_config.service_cidr is defined %}
   # CIDR used for the service network
   snet: {{ user_config.service_cidr}}
 {% endif %}
-
 {% if user_config.storage_cidr is defined %}
   # CIDR used for the storage network
   storage: {{ user_config.storage_cidr }}
 {% endif %}
-
 {% if user_config.repl_cidr is defined %}
   # CIDR used for the replication network
   repl: {{ user_config.repl_cidr }}
 {% endif %}
-
 {% if user_config.used_ips is defined %}
 used_ips:
 {% for used_ip_range in user_config.used_ips %}
@@ -54,10 +49,10 @@ global_overrides:
   # External DMZ VIP address
   external_lb_vip_address: {{ user_config.external_lb_vip_address }}
 
-  {% if user_config.tunnel_bridge is defined %}
+{% if user_config.tunnel_bridge is defined %}
   # Bridged interface to use with tunnel type networks
   tunnel_bridge: "{{ user_config.tunnel_bridge }}"
-  {% endif %}
+{% endif %}
 
   # Bridged interface to build containers with
   management_bridge: "{{ user_config.container_bridge }}"
