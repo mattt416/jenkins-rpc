@@ -103,7 +103,7 @@ class Build(object):
             if match_str in line:
                 previous_task = self.get_previous_task(i, lines)
                 self.failures.append(
-                    "Maas Alarm in alert status. PrevTask: {task}".format(
+                    "Maas Alarm in alert state. PrevTask: {task}".format(
                         task=previous_task))
                 break
 
