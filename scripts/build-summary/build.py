@@ -91,6 +91,7 @@ class Build(object):
             self.cannot_find_role(lines)
             self.ceilometer_user_not_found(lines)
             self.dpkg_locked(lines)
+            self.maas_alarm(lines)
             # if not self.failures:
             #    self.deploy_rc(lines)
 
