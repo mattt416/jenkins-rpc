@@ -156,12 +156,12 @@ def summary(builds, newerthan, cache):
     # logs don't need to be reprocessed on the next run.
     age_limit = (datetime.datetime.now()
                  - datetime.timedelta(days=RETENTION_DAYS))
-    cache = {}
+    cache_dict = {}
     for num, build in buildobjs.items():
         if build.timestamp > age_limit:
-            cache[num] = build
+            cache_dict[num] = build
     with open(cache, 'wb') as f:
-        pickle.dump(cache, f, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(cache_dict, f, pickle.HIGHEST_PROTOCOL)
 
 if __name__ == '__main__':
     summary()
