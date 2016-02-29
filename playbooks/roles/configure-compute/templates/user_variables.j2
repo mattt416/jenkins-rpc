@@ -1,9 +1,9 @@
-glance_default_store: swift
 {% if repo_url is defined %}
 openstack_repo_url: '{{ repo_url }}'
 {% endif %}
 # required for os-glance-install.yml playbook
-glance_default_store: file
+{% if swift_config is defined}
+glance_default_store: swift
 glance_notification_driver: noop
 glance_swift_store_auth_address: {{ "'{{ keystone_service_internalurl }}'" }}
 glance_swift_store_container: glance_images
@@ -11,6 +11,7 @@ glance_swift_store_endpoint_type: internalURL
 glance_swift_store_key: {{ "'{{ glance_service_password }}'" }}
 glance_swift_store_region: RegionOne
 glance_swift_store_user: 'service:glance'
+{% endif %}
 tempest_public_subnet_cidr: '172.29.248.0/22'
 # See https://bugs.launchpad.net/openstack-ansible/+bug/1442823
 # TODO: revert this once these tests can run successfully w/ run_ssh: True
