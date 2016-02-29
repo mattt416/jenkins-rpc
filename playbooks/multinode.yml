@@ -45,9 +45,6 @@
   user: root
   gather_facts: yes
   tags:
-    - nightly
-    - commit
-    - prepare
     - cinder-volume
   roles:
     - volumes
@@ -56,9 +53,6 @@
   user: root
   gather_facts: yes
   tags:
-    - nightly
-    - commit
-    - prepare
     - configure-swift-lvs
   roles:
     - configure-swift-lvs
