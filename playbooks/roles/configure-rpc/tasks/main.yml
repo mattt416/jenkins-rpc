@@ -1,3 +1,17 @@
 ---
-- name: Copy RPC configuration files
-  shell: "cp --recursive {{ product_repo_dir }}/rpcd/etc/{{ config_prefix }}_deploy/* /etc/{{ config_prefix }}_deploy/"
+- name: Copy RPC rpcd/etc configuration files
+  shell: "cp {{ product_repo_dir }}/rpcd/etc/{{ config_prefix }}_deploy/{{ item }} /etc/{{ config_prefix }}_deploy/"
+  with_items:
+    - user_extras_secrets.yml
+    - user_extras_variables.yml
+
+- name: Copy RPC rpcd/env.d variable files
+  shell: "cp {{ product_repo_dir }}/rpcd/etc/{{ config_prefix }}_deploy/env.d/* /etc/{{ config_prefix }}_deploy/env.d/"
+
+- name: Copy RPC rpcd/conf.d configuration files
+  shell: "cp {{ product_repo_dir }}/rpcd/etc/{{ config_prefix }}_deploy/conf.d/* /etc/{{ config_prefix }}_deploy/conf.d/"
+
+- name: Merge RPC user_varibles.yml file with OSA user_variables.yml file
+  shell: "{{ product_repo_dir }}/scripts/update-yaml.py /etc/{{ config_prefix }}_deploy/{{ item }} {{ product_repo_dir }}/rpcd/etc/{{ config_prefix }}_deploy/{{ item }}"
+  with_items:
+    - user_variables.yml
