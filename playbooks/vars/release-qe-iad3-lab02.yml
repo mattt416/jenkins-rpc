@@ -51,6 +51,86 @@ user_config:
         - nova_compute
         - cinder_volume
 
+# Cinder's volume group
+vgs:
+  - name: cinder-volumes
+    device: /dev/sdb
+
+# Cinder Config
+cinder_storage:
+  backends:
+    lvm:
+      volume_group: cinder-volumes
+      volume_driver: cinder.volume.drivers.lvm.LVMISCSIDriver
+      volume_backend_name: LVM_iSCSI
+    lvm_ssd:
+      volume_group: cinder-volumes
+      volume_driver: cinder.volume.drivers.lvm.LVMISCSIDriver
+      volume_backend_name: LVM_iSCSI
+
+# Swift Config
+# Only used if inventory has swift hosts
+swift_config:
+  part_power: 8
+  weight: 100
+  min_part_hours: 1
+  repl_number: 3
+  storage_network: 'br-storage'
+  replication_network: 'br-storage'
+  drives:
+    - name: sdc
+    - name: sdd
+    - name: sde
+    - name: sdf
+    - name: sdg
+  lv_size: 400G
+  mount_point: /mnt
+  account: "service:glance"
+  container: glance
+  storage_policies:
+    - name: gold
+      index: 0
+      default: True
+    - name: silver
+      index: 1
+      repl_number: 3
+      depreciated: True
+
+# Ceph Config
+# Only used if inventory have ceph hosts
+ceph_config:
+  glance_default_store: rbd
+  nova_libvirt_images_rbd_pool: vms
+  nova_force_config_drive: False
+  nova_libvirtd_listen_tls: 0
+  nova_libvirtd_listen_tcp: 1
+  nova_libvirtd_auth_tcp: none
+  volume_driver: cinder.volume.drivers.rbd.RBDDriver
+  rbd_pool: volumes
+  rbd_ceph_conf: /etc/ceph/ceph.conf
+  rbd_flatten_volume_from_snapshot: 'false'
+  rbd_max_clone_depth: 5
+  rbd_store_chunk_size: 4
+  rados_connect_timeout: -1
+  glance_api_version: 2
+  volume_backend_name: ceph
+  monitor_interface: eth1
+  public_network: 172.20.236.0/22
+  cluster_network: 192.168.1.0/24
+  devices:
+    - /dev/sdc
+    - /dev/sdd
+    - /dev/sde
+    - /dev/sdf
+    - /dev/sdg
+  raw_journal_devices:
+    - /dev/sdb
+    - /dev/sdb
+    - /dev/sdb
+    - /dev/sdb
+    - /dev/sdb
+
+# Host networking config
 networking:
   - name: lo
     type: loopback
@@ -171,19 +251,3 @@ networking:
       # No bridge port on this bridge
       - "address 172.29.248.1"
       - "netmask 255.255.252.0"
-
-# Cinder's volume group
-vgs:
-  - name: cinder-volumes
-    device: /dev/sdb
-
-cinder_storage:
-  backends:
-    lvm:
-      volume_group: cinder-volumes
-      volume_driver: cinder.volume.drivers.lvm.LVMISCSIDriver
-      volume_backend_name: LVM_iSCSI
-    lvm_ssd:
-      volume_group: cinder-volumes
-      volume_driver: cinder.volume.drivers.lvm.LVMISCSIDriver
-      volume_backend_name: LVM_iSCSI
