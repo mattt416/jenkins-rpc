@@ -68,6 +68,7 @@ swift_config:
   weight: 100
   min_part_hours: 1
   repl_number: 3
+  region: 1
   storage_network: 'br-storage'
   replication_network: 'br-storage'
   drives:

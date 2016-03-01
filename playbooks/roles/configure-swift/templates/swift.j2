@@ -57,7 +57,5 @@ swift_hosts:
     container_vars:
       swift_vars:
         zone: {{ hostvars[host]["zone"] }}
-{% if swift_config.region is defined %}
         region: {{ swift_config.region }}
-{% endif %}
 {% endfor %}
