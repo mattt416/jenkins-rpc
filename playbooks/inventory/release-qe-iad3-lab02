@@ -30,5 +30,10 @@
 573964-storage02
 573965-storage03
 
+[swift]
+573963-storage01 zone=1
+573964-storage02 zone=2
+573965-storage03 zone=3
+
 [logger]
 573959-logging01
