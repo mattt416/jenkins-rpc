@@ -2,7 +2,7 @@
 openstack_repo_url: '{{ repo_url }}'
 {% endif %}
 # required for os-glance-install.yml playbook
-{% if swift_config is defined}
+{% if swift_config is defined %}
 glance_default_store: swift
 glance_notification_driver: noop
 glance_swift_store_auth_address: {{ "'{{ keystone_service_internalurl }}'" }}
