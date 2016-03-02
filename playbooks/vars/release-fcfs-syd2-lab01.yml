@@ -80,9 +80,14 @@ user_config:
           - cidr: "192.168.1.0/24"
             gateway: "192.168.3.1"
 
+# volume groups for cinder
+vgs:
+  - name: cinder-volumes
+    device:
+      - /dev/sdb
+
 # all swift configuration
 swift_config:
-  vg: swift-volumes
   part_power: 8
   weight: 100
   repl_number: 3
@@ -91,12 +96,10 @@ swift_config:
   storage_network: 'br-storage'
   replication_network: 'br-repl'
   drives:
-    - name: swift1
-    - name: swift2
-    - name: swift3
-    - name: swift4
-    - name: swift5
-  lv_size: 50G
+    - name: sdc
+    - name: sdd
+    - name: sde
+    - name: sdf
   mount_point: /mnt
   mount_opts: 'noatime,nodiratime,nobarrier,logbufs=8,nobootwait'
   account: "service:glance"
@@ -264,15 +267,3 @@ networking:
       - "bridge_fd 0"
       - "address 172.29.248.1"
       - "netmask 255.255.252.0"
-
-# volume groups for cinder / swift
-vgs:
-  - name: cinder-volumes
-    device:
-      - /dev/sdb
-      - /dev/sdc
-      - /dev/sdd
-  - name: swift-volumes
-    device:
-      - /dev/sde
-      - /dev/sdf
