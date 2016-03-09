@@ -276,6 +276,8 @@ class Build(object):
                                                 lines,
                                                 order=1,
                                                 get_line_num=True)
+        if next_task_line == "":
+            return False
 
         for line in lines[fail_line:next_task_line]:
             if '...ignoring' in line:
