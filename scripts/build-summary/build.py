@@ -106,9 +106,9 @@ class Build(object):
             match = match_re.search(line)
             if match:
                 previous_task = self.get_previous_task(i, lines)
-                self.failures.append('Task Failed: {task}'.format(
-                    task=previous_task))
-                break
+                if not self.failure_ignored(i, lines):
+                    self.failures.append('Task Failed: {task}'.format(
+                        task=previous_task))
 
     def setup_tools_sql_alchemy(self, lines):
         match_str = ("error in SQLAlchemy-Utils setup command: "
@@ -249,20 +249,34 @@ class Build(object):
                         task=previous_task))
                 break
 
-    def get_previous_task(self, line, lines):
+    def get_previous_task(self, line, lines, order=-1, get_line_num=False):
         previous_task_re = re.compile(
             'TASK: \[((?P<role>.*)\|)?(?P<task>.*)\]')
-        for index in range(line, 0, -1):
+        for index in range(line, 0, order):
             match = previous_task_re.search(lines[index])
             if match:
                 gd = match.groupdict()
-                if 'role' in gd:
-                    return '{role}/{task}'.format(
-                        role=gd['role'], task=gd['task'])
+                if get_line_num:
+                    return index
                 else:
-                    return gd['task']
+                    if 'role' in gd:
+                        return '{role}/{task}'.format(
+                            role=gd['role'], task=gd['task'])
+                    else:
+                        return gd['task']
 
         return ""
+
+    def failure_ignored(self, fail_line, lines):
+        next_task_line = self.get_previous_task(fail_line,
+                                                lines,
+                                                order=1,
+                                                get_line_num=True)
+
+        for line in lines[fail_line:next_task_line]:
+            if '...ignoring' in line:
+                return True
+        return False
 
     def service_unavailable(self, lines):
         match_str = ('ERROR: Service Unavailable (HTTP 503)')
