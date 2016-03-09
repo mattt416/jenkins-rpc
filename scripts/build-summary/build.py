@@ -93,11 +93,22 @@ class Build(object):
             self.dpkg_locked(lines)
             self.maas_alarm(lines)
             self.setup_tools_sql_alchemy(lines)
+            self.ansible_task_fail(lines)
             # if not self.failures:
             #    self.deploy_rc(lines)
 
         if not self.failures:
             self.failures.append("Unknown Failure")
+
+    def ansible_task_fail(self, lines):
+        match_re = re.compile('failed:.*=>.*failed')
+        for i, line in enumerate(lines):
+            match = match_re.search(line)
+            if match:
+                previous_task = self.get_previous_task(i, lines)
+                self.failures.append('Task Failed: {task}'.format(
+                    task=previous_task))
+                break
 
     def setup_tools_sql_alchemy(self, lines):
         match_str = ("error in SQLAlchemy-Utils setup command: "
