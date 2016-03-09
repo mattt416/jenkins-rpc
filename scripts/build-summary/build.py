@@ -252,7 +252,11 @@ class Build(object):
     def get_previous_task(self, line, lines, order=-1, get_line_num=False):
         previous_task_re = re.compile(
             'TASK: \[((?P<role>.*)\|)?(?P<task>.*)\]')
-        for index in range(line, 0, order):
+        if order == -1:
+            end = 0
+        else:
+            end = len(lines)
+        for index in range(line, end, order):
             match = previous_task_re.search(lines[index])
             if match:
                 gd = match.groupdict()
