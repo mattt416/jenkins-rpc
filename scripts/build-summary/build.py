@@ -85,19 +85,19 @@ class Build(object):
             self.cannot_find_role(lines)
 
             # Specific Failures
-            self.apt_mirror_fail(lines)
             self.service_unavailable(lines)
             self.rebase_fail(lines)
             self.rsync_fail(lines)
             self.elasticsearch_plugin_install(lines)
             self.portnotfound(lines)
-            self.secgroup_in_use(lines)
-            self.ceilometer_user_not_found(lines)
-            self.dpkg_locked(lines)
-            self.maas_alarm(lines)
-            self.setup_tools_sql_alchemy(lines)
 
             # Disabled Failures
+            # self.setup_tools_sql_alchemy(lines)
+            # self.ceilometer_user_not_found(lines)
+            # self.apt_mirror_fail(lines)
+            # self.dpkg_locked(lines)
+            # self.secgroup_in_use(lines)
+            # self.maas_alarm(lines)
             # self.glance_504(lines)
 
             # if not self.failures:
