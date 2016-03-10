@@ -18,7 +18,10 @@ user_config:
       bridge: br-mgmt
       container_bridge: br-mgmt
       container_interface: eth1
+      container_type: veth
       ip_from_q: container
+      is_ssh_address: true
+      is_container_address: true
       type: raw
       group_binds:
         - all_containers
@@ -26,6 +29,7 @@ user_config:
     - name: provider
       bridge: br-vlan
       container_interface: eth11
+      container_type: veth
       type: vlan
       range: 840:840
       net_name: vlan
@@ -34,6 +38,7 @@ user_config:
     - name: tenant
       bridge: br-vxlan
       container_interface: eth10
+      container_type: veth
       ip_from_q: tunnel
       type: vxlan
       range: 1:1000
@@ -43,6 +48,7 @@ user_config:
     - name: storage
       bridge: br-storage
       container_interface: eth2
+      container_type: veth
       ip_from_q: storage
       type: raw
       group_binds:
@@ -50,6 +56,7 @@ user_config:
         - cinder_api
         - nova_compute
         - cinder_volume
+        - swift_proxy
 
 # Cinder's volume group
 vgs:
@@ -69,7 +76,6 @@ cinder_storage:
       volume_backend_name: LVM_iSCSI
 
 # Swift Config
-# Only used if inventory has swift hosts
 swift_config:
   part_power: 8
   weight: 100
@@ -98,7 +104,6 @@ swift_config:
       depreciated: True
 
 # Ceph Config
-# Only used if inventory have ceph hosts
 ceph_config:
   glance_default_store: rbd
   nova_libvirt_images_rbd_pool: vms
@@ -180,7 +185,7 @@ networking:
   - name: bond1
     type: manual
     directives:
-      - "bond-slaves p6p1 p7p1"
+      - "bond-slaves p6p2 p7p2"
       - "bond-mode active-backup"
       - "bond-miimon 100"
       - "bond-downdelay 250"

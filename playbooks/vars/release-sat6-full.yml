@@ -1,12 +1,8 @@
+---
 # Repo Config
 config_prefix: openstack
 repo_dir: openstack_repo
 razor_url: http://10.127.101.82:8080/api
-
-# Volume Group Config
-vgs:
-  - name: cinder-volumes
-    device: /dev/sdb
 
 # Openstack User Config
 user_config:
@@ -24,49 +20,54 @@ user_config:
     container_bridge: br-mgmt
     lb_name:
     networking:
-        - name: container
-          bridge: br-mgmt
-          container_bridge: br-mgmt
-          container_interface: eth1
-          container_type: veth
-          ip_from_q: container
-          type: raw
-          is_ssh_address: true
-          is_container_address: true
-          group_binds:
-            - all_containers
-            - hosts
-        - name: provider
-          bridge: br-vlan
-          container_interface: eth11
-          container_type: veth
-          type: vlan
-          range: 2010:2010
-          net_name: vlan
-          group_binds:
-            - neutron_linuxbridge_agent
-        - name: tenant
-          bridge: br-vxlan
-          container_interface: eth10
-          container_type: veth
-          ip_from_q: tunnel
-          type: vxlan
-          range: 1:1000
-          net_name: vxlan
-          group_binds:
-            - neutron_linuxbridge_agent
-        - name: storage
-          bridge: br-storage
-          container_interface: eth2
-          container_type: veth
-          ip_from_q: storage
-          type: raw
-          group_binds:
-            - glance_api
-            - cinder_api
-            - cinder_volume
-            - nova_compute
-            - swift_proxy
+      - name: container
+        bridge: br-mgmt
+        container_bridge: br-mgmt
+        container_interface: eth1
+        container_type: veth
+        ip_from_q: container
+        type: raw
+        is_ssh_address: true
+        is_container_address: true
+        group_binds:
+          - all_containers
+          - hosts
+      - name: provider
+        bridge: br-vlan
+        container_interface: eth11
+        container_type: veth
+        type: vlan
+        range: 2010:2010
+        net_name: vlan
+        group_binds:
+          - neutron_linuxbridge_agent
+      - name: tenant
+        bridge: br-vxlan
+        container_interface: eth10
+        container_type: veth
+        ip_from_q: tunnel
+        type: vxlan
+        range: 1:1000
+        net_name: vxlan
+        group_binds:
+          - neutron_linuxbridge_agent
+      - name: storage
+        bridge: br-storage
+        container_interface: eth2
+        container_type: veth
+        ip_from_q: storage
+        type: raw
+        group_binds:
+          - glance_api
+          - cinder_api
+          - cinder_volume
+          - nova_compute
+          - swift_proxy
+
+# Volume Group Config
+vgs:
+  - name: cinder-volumes
+    device: /dev/sdb
 
 # Cinder Config
 cinder_storage:
@@ -79,6 +80,31 @@ cinder_storage:
       volume_group: cinder-volume-ssd
       volume_driver: cinder.volume.drivers.lvm.LVMISCSIDriver
       volume_backend_name: LVM_iSCSISSD
+
+# Swift Config
+swift_config:
+  part_power: 8
+  weight: 100
+  min_part_hours: 1
+  repl_number: 3
+  region: 1
+  storage_network: 'br-storage'
+  replication_network: 'br-storage'
+  drives:
+    - name: sdc
+    - name: sdd
+    - name: sde
+  mount_point: /mnt
+  account: "service:glance"
+  container: glance
+  storage_policies:
+    - name: gold
+      index: 0
+      default: True
+    - name: silver
+      index: 1
+      repl_number: 3
+      depreciated: True
 
 # Ceph Config
 ceph_config:
@@ -108,31 +134,6 @@ ceph_config:
     - /dev/sdb
     - /dev/sdb
     - /dev/sdb
-
-# Swift Config
-swift_config:
-  part_power: 8
-  weight: 100
-  min_part_hours: 1
-  repl_number: 3
-  region: 1
-  storage_network: 'br-storage'
-  replication_network: 'br-storage'
-  drives:
-    - name: sdc
-    - name: sdd
-    - name: sde
-  mount_point: /mnt
-  account: "service:glance"
-  container: glance
-  storage_policies:
-    - name: gold
-      index: 0
-      default: True
-    - name: silver
-      index: 1
-      repl_number: 3
-      depreciated: True
 
 # Networking Configuration
 networking:
