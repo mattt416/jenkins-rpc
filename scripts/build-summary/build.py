@@ -36,7 +36,7 @@ class Build(object):
         else:
             self.btype = 'full'
         self.get_parent_info()
-        self.failures = []
+        self.failures = set()
         if self.result != 'SUCCESS':
             self.get_failure_info()
 
@@ -98,7 +98,7 @@ class Build(object):
             #    self.deploy_rc(lines)
 
         if not self.failures:
-            self.failures.append("Unknown Failure")
+            self.failures.add("Unknown Failure")
 
     def ansible_task_fail(self, lines):
         match_re = re.compile('failed:.*=>.*failed')
@@ -107,7 +107,7 @@ class Build(object):
             if match:
                 previous_task = self.get_previous_task(i, lines)
                 if not self.failure_ignored(i, lines):
-                    self.failures.append('Task Failed: {task}'.format(
+                    self.failures.add('Task Failed: {task}'.format(
                         task=previous_task))
 
     def setup_tools_sql_alchemy(self, lines):
@@ -116,7 +116,7 @@ class Build(object):
         for i, line in enumerate(lines):
             if match_str in line:
                 previous_task = self.get_previous_task(i, lines)
-                self.failures.append(
+                self.failures.add(
                     "Setup Tools / SQL Alchemy Fail. PrevTask: {task}".format(
                         task=previous_task))
                 break
@@ -126,7 +126,7 @@ class Build(object):
         for i, line in enumerate(lines):
             if match_str in line:
                 previous_task = self.get_previous_task(i, lines)
-                self.failures.append(
+                self.failures.add(
                     "Maas Alarm in alert state. PrevTask: {task}".format(
                         task=previous_task))
                 break
@@ -137,7 +137,7 @@ class Build(object):
         for i, line in enumerate(lines):
             if match_str in line or alt_match_str in line:
                 previous_task = self.get_previous_task(i, lines)
-                self.failures.append(
+                self.failures.add(
                     "dpkg locked. PrevTask: {task}".format(
                         task=previous_task))
                 break
@@ -147,7 +147,7 @@ class Build(object):
         for i, line in enumerate(lines):
             if match_str in line:
                 previous_task = self.get_previous_task(i, lines)
-                self.failures.append(
+                self.failures.add(
                     "user ceilometer not found. PrevTask: {task}".format(
                         task=previous_task))
                 break
@@ -157,7 +157,7 @@ class Build(object):
         for i, line in enumerate(lines):
             if match_str in line:
                 previous_task = self.get_previous_task(i, lines)
-                self.failures.append(
+                self.failures.add(
                     "Cannot find role. PrevTask: {task}".format(
                         task=previous_task))
                 break
@@ -167,8 +167,8 @@ class Build(object):
         for i, line in enumerate(lines):
             match = match_re.search(line)
             if match:
-                self.failures.append('Nova/Neutron Error: '
-                                     'Security Group ... in use')
+                self.failures.add('Nova/Neutron Error: '
+                                  'Security Group ... in use')
                 break
 
     def portnotfound(self, lines):
@@ -177,9 +177,9 @@ class Build(object):
         for i, line in enumerate(lines):
             match = match_re.search(line)
             if match:
-                self.failures.append('Nova/Neutron Exception: '
-                                     'neutronclient.common.exceptions'
-                                     '.PortNotFoundClient')
+                self.failures.add('Nova/Neutron Exception: '
+                                  'neutronclient.common.exceptions'
+                                  '.PortNotFoundClient')
                 break
 
     def tempestfail(self, lines):
@@ -188,7 +188,7 @@ class Build(object):
             match = match_re.search(line)
             if match:
                 test = match.groupdict()['test']
-                self.failures.append('Tempest Test Failed: {test}'.format(
+                self.failures.add('Tempest Test Failed: {test}'.format(
                     test=test))
 
     def elasticsearch_plugin_install(self, lines):
@@ -196,7 +196,7 @@ class Build(object):
         for i, line in enumerate(lines):
             if match_str in line:
                 previous_task = self.get_previous_task(i, lines)
-                self.failures.append(
+                self.failures.add(
                     "Elasticsearch Plugin Install Fail. "
                     "PrevTask: {task}".format(
                         task=previous_task))
@@ -210,7 +210,7 @@ class Build(object):
                 beforecontext = lines[i-1:i-4:-1]
                 for j, cline in enumerate(beforecontext):
                     beforecontext[j] = remove_colour.sub('', cline)
-                self.failures.append("Unkown:" + " ".join(beforecontext))
+                self.failures.add("Unkown:" + " ".join(beforecontext))
                 break
 
     def rsync_fail(self, lines):
@@ -218,7 +218,7 @@ class Build(object):
         for i, line in enumerate(lines):
             if match_re.search(line):
                 previous_task = self.get_previous_task(i, lines)
-                self.failures.append(
+                self.failures.add(
                     'Failure Running Rsync. PrevTask: {task}'.format(
                         task=previous_task))
                 break
@@ -228,14 +228,14 @@ class Build(object):
                      "Make sure this host can be reached over ssh")
         for line in lines:
             if match_str in line:
-                self.failures.append(match_str.strip())
+                self.failures.add(match_str.strip())
                 break
 
     def rebase_fail(self, lines):
         match_str = "Rebase failed, quitting\n"
         try:
             lines.index(match_str)
-            self.failures.append("Merge Conflict: " + match_str.strip())
+            self.failures.add("Merge Conflict: " + match_str.strip())
         except ValueError:
             return
 
@@ -244,10 +244,9 @@ class Build(object):
         for i, line in enumerate(lines):
             if match_str in line and '...ignoring' not in lines[i+1]:
                 previous_task = self.get_previous_task(i, lines)
-                self.failures.append(
+                self.failures.add(
                     "Too many retries. PrevTask: {task}".format(
                         task=previous_task))
-                break
 
     def get_previous_task(self, line, lines, order=-1, get_line_num=False):
         previous_task_re = re.compile(
@@ -294,7 +293,7 @@ class Build(object):
             # didn't find a match
             return
         previous_task = self.get_previous_task(fail_line, lines)
-        self.failures.append(
+        self.failures.add(
             'Service Unavailable 503. PrevTask: {previous_task}'.format(
                 previous_task=previous_task))
 
@@ -306,7 +305,7 @@ class Build(object):
         except ValueError:
             return
         previous_task = self.get_previous_task(timeout_line, lines)
-        self.failures.append(
+        self.failures.add(
             'Inactivity Timeout: {previous_task}'.format(
                 previous_task=previous_task))
 
@@ -316,7 +315,7 @@ class Build(object):
         try:
             i = lines.index(match_str)
             previous_task = self.get_previous_task(i, lines)
-            self.failures.append("Apt Mirror Fail: {line} {task}".format(
+            self.failures.add("Apt Mirror Fail: {line} {task}".format(
                 line=match_str.strip(),
                 task=previous_task))
         except ValueError:
@@ -327,7 +326,7 @@ class Build(object):
                      "The server didn't respond in time. (HTTP N/A)\n")
         try:
             lines.index(match_str)
-            self.failures.append("Cirros upload fail: " + match_str.strip())
+            self.failures.add("Cirros upload fail: " + match_str.strip())
         except ValueError:
             return
 

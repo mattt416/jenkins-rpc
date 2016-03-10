@@ -57,8 +57,17 @@ class TSF(object):
 def print_html(buildobjs):
     buildobjs = buildobjs.values()
     failcount = collections.defaultdict(dict)
+
+    task_failed_re = re.compile('Task Failed: (?P<task>.*)')
     for build in buildobjs:
         for failure in build.failures:
+
+            # Skip task failed if, too many retries also exists for same task
+            match = task_failed_re.search(failure)
+            if match and 'Too many retries. PrevTask: {task}'.format(
+                    task=match.groupdict()['task']) in build.failures:
+                continue
+
             d = failcount[failure]
             if 'count' not in d:
                 d['count'] = 0
