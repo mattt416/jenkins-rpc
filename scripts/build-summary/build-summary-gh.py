@@ -2,6 +2,7 @@
 
 # Stdlib import
 import collections
+import copy
 import datetime
 import os
 import pickle
@@ -58,16 +59,17 @@ def print_html(buildobjs):
     buildobjs = buildobjs.values()
     failcount = collections.defaultdict(dict)
 
+    # remove 'task failed' if 'too many retries' also exists for same task
     task_failed_re = re.compile('Task Failed: (?P<task>.*)')
     for build in buildobjs:
-        for failure in build.failures:
-
-            # Skip task failed if, too many retries also exists for same task
+        for failure in copy.copy(build.failures):
             match = task_failed_re.search(failure)
             if match and 'Too many retries. PrevTask: {task}'.format(
                     task=match.groupdict()['task']) in build.failures:
-                continue
+                build.failures.remove(failure)
 
+    for build in buildobjs:
+        for failure in build.failures:
             d = failcount[failure]
             if 'count' not in d:
                 d['count'] = 0
