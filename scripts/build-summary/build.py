@@ -77,23 +77,29 @@ class Build(object):
         if self.result == 'ABORTED':
             self.timeout(lines)
         if self.result == 'FAILURE':
-            self.glance_504(lines)
-            self.apt_mirror_fail(lines)
-            self.too_many_retries(lines)
+            # Generic Failures
             self.ssh_fail(lines)
+            self.too_many_retries(lines)
+            self.ansible_task_fail(lines)
+            self.tempestfail(lines)
+            self.cannot_find_role(lines)
+
+            # Specific Failures
+            self.apt_mirror_fail(lines)
             self.service_unavailable(lines)
             self.rebase_fail(lines)
             self.rsync_fail(lines)
             self.elasticsearch_plugin_install(lines)
-            self.tempestfail(lines)
             self.portnotfound(lines)
             self.secgroup_in_use(lines)
-            self.cannot_find_role(lines)
             self.ceilometer_user_not_found(lines)
             self.dpkg_locked(lines)
             self.maas_alarm(lines)
             self.setup_tools_sql_alchemy(lines)
-            self.ansible_task_fail(lines)
+
+            # Disabled Failures
+            # self.glance_504(lines)
+
             # if not self.failures:
             #    self.deploy_rc(lines)
 
@@ -101,7 +107,7 @@ class Build(object):
             self.failures.add("Unknown Failure")
 
     def ansible_task_fail(self, lines):
-        match_re = re.compile('failed:.*=>.*failed')
+        match_re = re.compile('failed:.*=>')
         for i, line in enumerate(lines):
             match = match_re.search(line)
             if match:
