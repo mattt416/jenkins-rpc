@@ -51,7 +51,7 @@ create_public_net_subnet() {
         echo "Network 'public' exists! Skipping..."
     else
         neutron net-create public  --provider:network_type=vlan --provider:physical_network=vlan --provider:segmentation_id=$SEGID --router:external=True
-        neutron subnet-create public  $GATEWAY_CIDR --name public-subnet  --gateway $GATEWAY_IP
+        neutron subnet-create public $GATEWAY_CIDR --name public-subnet  --gateway $GATEWAY_IP
     fi
 }
 
@@ -89,7 +89,7 @@ select_iad_lab1() {
 
 select_iad_lab2() {
     #IAD LAB 02
-    SEGID=410
+    SEGID=840
     GATEWAY_CIDR=10.4.213.192/26
     GATEWAY_IP=10.4.213.193
 }
