@@ -257,22 +257,32 @@ class Build(object):
     def get_previous_task(self, line, lines, order=-1, get_line_num=False):
         previous_task_re = re.compile(
             'TASK: \[((?P<role>.*)\|)?(?P<task>.*)\]')
+        previous_play_re = re.compile(
+            'PLAY \[(?P<play>.*)\]')
+        task_match = None
+        play_match = None
         if order == -1:
             end = 0
         else:
             end = len(lines)
         for index in range(line, end, order):
-            match = previous_task_re.search(lines[index])
-            if match:
-                gd = match.groupdict()
-                if get_line_num:
-                    return index
+            if not task_match:
+                task_match = previous_task_re.search(lines[index])
+            if task_match and get_line_num:
+                return index
+            play_match = previous_play_re.search(lines[index])
+            if task_match and play_match:
+                task_groups = task_match.groupdict()
+                play_groups = play_match.groupdict()
+                if 'role' in task_groups and task_groups['role']:
+                    return '{play} / {role} / {task}'.format(
+                        role=task_groups['role'],
+                        play=play_groups['play'],
+                        task=task_groups['task'])
                 else:
-                    if 'role' in gd:
-                        return '{role}/{task}'.format(
-                            role=gd['role'], task=gd['task'])
-                    else:
-                        return gd['task']
+                    return '{play} / {task}'.format(
+                        play=play_groups['play'],
+                        task=task_groups['task'])
 
         return ""
 
@@ -281,6 +291,7 @@ class Build(object):
                                                 lines,
                                                 order=1,
                                                 get_line_num=True)
+
         if next_task_line == "":
             return False
 
