@@ -53,7 +53,7 @@ class Build(object):
     def get_parent_info(self):
 
         upstream_project = self.tree.find('.//upstreamProject')
-        if upstream_project:
+        if upstream_project is not None:
             self.upstream_project = upstream_project.text
             self.upstream_build_no = self.tree.find('.//upstreamBuild').text
         else:
