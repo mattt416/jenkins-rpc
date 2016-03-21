@@ -51,10 +51,15 @@ class Build(object):
         return kvs
 
     def get_parent_info(self):
-        self.upstream_project = self.tree.find('.//upstreamProject').text
-        self.upstream_build_no = self.tree.find('.//upstreamBuild').text
-        prinfo = self.tree.find('.//org.jenkinsci.plugins.ghprb.GhprbCause')
+
+        upstream_project = self.tree.find('.//upstreamProject')
+        if upstream_project:
+            self.upstream_project = upstream_project.text
+            self.upstream_build_no = self.tree.find('.//upstreamBuild').text
+        else:
+            self.upstream_project = ""
         self.trigger = "periodic"
+        prinfo = self.tree.find('.//org.jenkinsci.plugins.ghprb.GhprbCause')
         if prinfo is not None:
             # build started by pr
             self.trigger = "pr"
