@@ -194,7 +194,7 @@ class Build(object):
                 break
 
     def tempestfail(self, lines):
-        match_re = re.compile('\{0\}.*(?P<test>tempest[^ ]*).*\.\.\. FAILED')
+        match_re = re.compile('\{0\} (?P<test>tempest[^ ]*).*\.\.\. FAILED')
         for i, line in enumerate(lines):
             match = match_re.search(line)
             if match:
