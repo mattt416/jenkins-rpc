@@ -1,0 +1,34 @@
+---
+labels:
+  - name: rpcaio
+    image: trusty
+    min-ready: 2
+    providers:
+      - name: RackspaceIAD
+
+providers:
+  - name: 'RackspaceIAD'
+    cloud: 'raxus'
+    region-name: 'IAD'
+    max-servers: 4
+    rate: 1.0
+    boot-timeoust: 120
+    launch-timeout: 900
+    template-hostname: 'jenkins-np-{image.name}'
+    images:
+      - name: trusty
+        base-image: 'Ubuntu 14.04 LTS (Trusty Tahr) (PVHVM)'
+        min-ram: 15360
+        name-filter: 'performance2-15'
+        username: jenkins
+        user-home: '/home/jenkins'
+        private-key: '/opt/jenkins/creds/id_rsa_cloud10_jenkins'
+
+targets:
+  - name: jenkins.propter.net
+    hostname: '{label.name}-{provider.name}-{node.id}'
+    subnode-hostname: '{label.name}-{provider.name}-{node_id}-{subnode_id}'
+
+zmq-publishers:
+  - 'tcp://jenkins.propter.net:8888'
+
