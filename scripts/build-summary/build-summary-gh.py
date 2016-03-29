@@ -39,7 +39,10 @@ class TSF(object):
 
     @property
     def s_percent(self):
-        return (float(self.s)/float(self.t))*100.0
+        try:
+            return (float(self.s)/float(self.t))*100.0
+        except ZeroDivisionError:
+            return 0
 
     def success(self):
         self.t += 1
