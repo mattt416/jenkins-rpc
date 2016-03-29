@@ -31,10 +31,13 @@ class Build(object):
         self.env_vars = self.read_env_file(self.env_file)
         self.branch = self.env_vars['ghprbTargetBranch']
         self.commit = self.env_vars.get('ghprbActualCommit', '')
+        self.btype = 'full'
         if self.env_vars['DEPLOY_CEPH'] == 'yes':
             self.btype = 'ceph'
-        else:
-            self.btype = 'full'
+        if self.env_vars['DEPLOY_MMAS'] == 'yes':
+            self.btype = 'maas'
+        if 'defcore' in self.env_vars['TEMPEST_TESTS']:
+            self.btype = 'defcore'
         self.get_parent_info()
         self.failures = set()
         if self.result != 'SUCCESS':
@@ -194,7 +197,7 @@ class Build(object):
                 break
 
     def tempestfail(self, lines):
-        match_re = re.compile('\{0\}.*(?P<test>tempest[^ ]*).*\.\.\. FAILED')
+        match_re = re.compile('\{0\} (?P<test>tempest[^ ]*).*\.\.\. FAILED')
         for i, line in enumerate(lines):
             match = match_re.search(line)
             if match:
