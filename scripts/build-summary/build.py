@@ -32,11 +32,14 @@ class Build(object):
         self.branch = self.env_vars['ghprbTargetBranch']
         self.commit = self.env_vars.get('ghprbActualCommit', '')
         self.btype = 'full'
-        if self.env_vars['DEPLOY_CEPH'] == 'yes':
+        if ('DEPLOY_CEPH' in self.env_vars
+                and self.env_vars['DEPLOY_CEPH'] == 'yes'):
             self.btype = 'ceph'
-        if self.env_vars['DEPLOY_MMAS'] == 'yes':
+        if ('DEPLOY_MAAS' in self.env_vars
+                and self.env_vars['DEPLOY_MMAS'] == 'yes'):
             self.btype = 'maas'
-        if 'defcore' in self.env_vars['TEMPEST_TESTS']:
+        if ('TEMPEST_TESTS' in self.env_vars
+                and 'defcore' in self.env_vars['TEMPEST_TESTS']):
             self.btype = 'defcore'
         self.get_parent_info()
         self.failures = set()
