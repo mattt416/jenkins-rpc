@@ -31,16 +31,14 @@ class Build(object):
         self.env_vars = self.read_env_file(self.env_file)
         self.branch = self.env_vars['ghprbTargetBranch']
         self.commit = self.env_vars.get('ghprbActualCommit', '')
-        self.btype = 'full'
-        if ('DEPLOY_CEPH' in self.env_vars
-                and self.env_vars['DEPLOY_CEPH'] == 'yes'):
+        if self.env_vars.get('DEPLOY_CEPH') == 'yes':
             self.btype = 'ceph'
-        if ('DEPLOY_MAAS' in self.env_vars
-                and self.env_vars['DEPLOY_MMAS'] == 'yes'):
+        elif self.env_vars.get('DEPLOY_MAAS') == 'yes':
             self.btype = 'maas'
-        if ('TEMPEST_TESTS' in self.env_vars
-                and 'defcore' in self.env_vars['TEMPEST_TESTS']):
+        elif 'defcore' in self.env_vars.get('TEMPEST_TESTS',''):
             self.btype = 'defcore'
+        else:
+            self.btype = 'full'
         self.get_parent_info()
         self.failures = set()
         if self.result != 'SUCCESS':
