@@ -36,6 +36,6 @@
   lineinfile:
     dest: /etc/fstab
     regexp: "^/dev/{{ item.name }}"
-    line: "LABEL={{ item.name }} {{ swift_config.mount_point }}/{{ item.name }} xfs noatime,nodiratime,nobarrier,logbufs=8,nobootwait 0 0"
+    line: "/dev/{{ item.name }} {{ swift_config.mount_point }}/{{ item.name }} xfs noatime,nodiratime,nobarrier,logbufs=8,nobootwait 0 0"
     state: present
   with_items: swift_config.drives

@@ -29,16 +29,16 @@ node89
 node98
 
 [compute]
-node94
-node101
 node108
-
-[ceph]
 node113
 node114
 node115
+
+[ceph]
+node94
 node116
 node119
+node107
 
 [swift]
 node91 zone=1
@@ -50,7 +50,7 @@ node118
 node119
 
 [haproxy]
-node107
+node101
 
 [logger]
-node121
+node101
