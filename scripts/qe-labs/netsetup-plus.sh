@@ -90,8 +90,8 @@ select_iad_lab1() {
 select_iad_lab2() {
     #IAD LAB 02
     SEGID=840
-    GATEWAY_CIDR=10.4.213.192/26
-    GATEWAY_IP=10.4.213.193
+    GATEWAY_CIDR=10.224.0.0/22
+    GATEWAY_IP=10.224.0.1
 }
 
 select_sat6_lab1() {
