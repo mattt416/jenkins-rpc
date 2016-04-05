@@ -37,7 +37,6 @@ node115
 [ceph]
 node94
 node116
-node119
 node107
 
 [swift]
