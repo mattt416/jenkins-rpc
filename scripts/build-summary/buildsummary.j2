@@ -68,10 +68,17 @@ $(document).ready( function () {
 
     // Most recent jobs
     $('#jobs').DataTable({
-      "order": [[ 2, "desc" ]],
-      "pageLength": 50
-      });
-    } );
+      "order": [[ 0, "desc" ]],
+      "pageLength": 50,
+      "columnDefs": [
+        {
+          "targets": [0],
+          "visible": false
+        }
+      ]
+    });
+
+});
 </script>
 </head>
 <body>
@@ -147,19 +154,21 @@ $(document).ready( function () {
       <td>{{fail.count}}</td>
       <td>{{description}}</td>
       <td><span class="spark" values="{{fail.histogram|join(',')}}"></span></td>
-      <td><a href="http://jenkins.propter.net/view/RPC-AIO/job/RPC-AIO/{{fail.oldest_job}}/">{{fail.oldest|hdate}}</a></td>
+      <td><a href="http://jenkins.propter.net/job/{{fail.oldest_bobj.job_name}}/{{fail.oldest_job}}/">{{fail.oldest|hdate}}</a></td>
       <td>{{fail.oldest_job}}</td>
-      <td><a href="http://jenkins.propter.net/view/RPC-AIO/job/RPC-AIO/{{fail.newest_job}}/">{{fail.newest|hdate}}</a></td>
+      <td><a href="http://jenkins.propter.net/job/{{fail.newest_bobj.job_name}}/{{fail.newest_job}}/">{{fail.newest|hdate}}</a></td>
       <td>{{fail.newest_job}}</td>
     </tr>
     {% endfor %}
     </tbody>
   </table>
- <h3>Recent RPC-AIO Results (30 Days)</h3>
+ <h3>Recent Results (30 Days)</h3>
   <table id="jobs" class="table">
     <thead>
       <tr>
+        <th>Date for Sorting</th>
         <th>Date / Result</th>
+        <th>Job</th>
         <th>Branch</th>
         <th>Build Num</th>
         <th>Parent Build</th>
@@ -169,15 +178,17 @@ $(document).ready( function () {
     <tbody>
     {% for buildobj in buildobjs %}
     <tr class="{{ "success" if buildobj.result == "SUCCESS" else 'danger' }}">
+      <td>{{buildobj.timestamp}}</td>
       <td>{{buildobj.timestamp|hdate}} {{buildobj.result}}</td>
+      <td>{{buildobj.job_name}}</td>
       <td>{{buildobj.branch}}</td>
-      <td><a href="http://jenkins.propter.net/view/RPC-AIO/job/{{buildobj.job_name}}/{{buildobj.build_num}}/">{{buildobj.build_num}}</a></td>
-      <!--<td><a href="http://jenkins.propter.net/view/RPC-AIO/job/{{buildobj.job_name}}/">{{buildobj.job_name}}</a></td> -->
-      <td><a href="http://jenkins.propter.net/view/RPC-AIO/job/{{buildobj.upstream_project}}/">{{buildobj.upstream_project}}</a> (Build #<a href="http://jenkins.propter.net/view/RPC-AIO/job/{{buildobj.upstream_project}}/{{buildobj.upstream_build_no}}">{{buildobj.upstream_build_no}}</a>)
+      <td><a href="http://jenkins.propter.net/job/{{buildobj.job_name}}/{{buildobj.build_num}}/">{{buildobj.build_num}}</a></td>
+      <!--<td><a href="http://jenkins.propter.net/job/{{buildobj.job_name}}/">{{buildobj.job_name}}</a></td> -->
+      <td><a href="http://jenkins.propter.net/job/{{buildobj.upstream_project}}/">{{buildobj.upstream_project}}</a> (Build #<a href="http://jenkins.propter.net/job/{{buildobj.upstream_project}}/{{buildobj.upstream_build_no}}">{{buildobj.upstream_build_no}}</a>)
         {% if buildobj.gh_pull %}
         PR#<a href="https://github.com/rcbops/rpc-openstack/pull/{{buildobj.gh_pull|default("")}}">{{buildobj.gh_pull|default("")}}:{{buildobj.gh_title|default("")}} {{buildobj.commit}} </a></td>
         {% endif %}
-      <td><a href="http://jenkins.propter.net/view/RPC-AIO/job/RPC-AIO/{{buildobj.build_num}}/consoleFull">{{buildobj.failures|join(" ")}}</a></td>
+      <td><a href="http://jenkins.propter.net/job/{{buildobj.job_name}}/{{buildobj.build_num}}/consoleFull">{{buildobj.failures|join(" ")}}</a></td>
     </tr>
     {% endfor %}
     </tbody>

@@ -80,18 +80,14 @@ def print_html(buildobjs):
             if 'builds' not in d:
                 d['builds'] = []
             d['builds'].append(build)
-            if 'oldest' not in d:
+            if 'oldest' not in d or d['oldest'] > build.timestamp:
                 d['oldest'] = build.timestamp
                 d['oldest_job'] = build.build_num
-            elif d['oldest'] > build.timestamp:
-                    d['oldest'] = build.timestamp
-                    d['oldest_job'] = build.build_num
-            if 'newest' not in d:
+                d['oldest_bobj'] = build
+            if 'newest' not in d or d['newest'] < build.timestamp:
                 d['newest'] = build.timestamp
                 d['newest_job'] = build.build_num
-            elif d['newest'] < build.timestamp:
-                    d['newest'] = build.timestamp
-                    d['newest_job'] = build.build_num
+                d['newest_bobj'] = build
 
     # Organise the builds for each failure into 24hr bins for sparklines
     histogram_length = RETENTION_DAYS

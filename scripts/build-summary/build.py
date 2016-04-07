@@ -29,13 +29,13 @@ class Build(object):
         self.env_file = '{build_folder}/injectedEnvVars.txt'.format(
             build_folder=self.build_folder)
         self.env_vars = self.read_env_file(self.env_file)
-        self.branch = self.env_vars['ghprbTargetBranch']
+        self.branch = self.env_vars.get('ghprbTargetBranch', '')
         self.commit = self.env_vars.get('ghprbActualCommit', '')
         if self.env_vars.get('DEPLOY_CEPH') == 'yes':
             self.btype = 'ceph'
         elif self.env_vars.get('DEPLOY_MAAS') == 'yes':
             self.btype = 'maas'
-        elif 'defcore' in self.env_vars.get('TEMPEST_TESTS',''):
+        elif 'defcore' in self.env_vars.get('TEMPEST_TESTS', ''):
             self.btype = 'defcore'
         else:
             self.btype = 'full'
@@ -73,15 +73,28 @@ class Build(object):
                 './/org.jenkinsci.plugins.ghprb.GhprbCause/title').text
 
     def get_failure_info(self):
-        self.console_file = '{build_folder}/log'.format(
-            build_folder=self.build_folder)
-        lines = open(self.console_file, 'r').readlines()
-        try:
-            post_build = lines.index(
-                '[PostBuildScript] - Execution post build scripts.\n')
-            lines = lines[0: post_build]
-        except Exception:
-            pass
+        def open_log(filename):
+            log_file = '{build_folder}/{filename}'.format(
+                build_folder=self.build_folder,
+                filename=filename)
+            lines = []
+            try:
+                with open(log_file, 'r') as f:
+                    lines = f.readlines()
+            except IOError:
+                return []
+
+            try:
+                post_build = lines.index(
+                    '[PostBuildScript] - Execution post build scripts.\n')
+                return lines[0: post_build]
+            except ValueError:
+                return lines
+
+        lines = []
+        lines += open_log('log')
+        lines += open_log('archive/artifacts/runcmd-bash.log')
+        lines += open_log('archive/artifacts/deploy.sh.log')
 
         if self.result == 'ABORTED':
             self.timeout(lines)
