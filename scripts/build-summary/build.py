@@ -151,7 +151,7 @@ class Build(object):
                     error=match.groupdict()['error']))
 
     def ansible_task_fail(self, lines):
-        match_re = re.compile('failed:.*=>')
+        match_re = re.compile('(fatal|failed):.*=>')
         for i, line in enumerate(lines):
             match = match_re.search(line)
             if match:
