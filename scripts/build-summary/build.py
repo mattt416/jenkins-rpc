@@ -113,6 +113,10 @@ class Build(object):
             self.elasticsearch_plugin_install(lines)
             self.portnotfound(lines)
 
+            # Heat related failures
+            self.create_fail(lines)
+            self.archive_fail(lines)
+
             # Disabled Failures
             # self.setup_tools_sql_alchemy(lines)
             # self.ceilometer_user_not_found(lines)
@@ -127,6 +131,24 @@ class Build(object):
 
         if not self.failures:
             self.failures.add("Unknown Failure")
+
+    def archive_fail(self, lines):
+        match_re = re.compile(
+            "Build step 'Archive the artifacts' "
+            "changed build result to FAILURE")
+        for i, line in enumerate(lines):
+            match = match_re.search(line)
+            if match:
+                self.failures.add('Failed on archiving artifacts')
+
+    def create_fail(self, lines):
+        match_re = re.compile(
+            'CREATE_FAILED  Resource CREATE failed:(?P<error>.*)$')
+        for i, line in enumerate(lines):
+            match = match_re.search(line)
+            if match:
+                self.failures.add('Heat Resource Fail: {error}'.format(
+                    error=match.groupdict()['error']))
 
     def ansible_task_fail(self, lines):
         match_re = re.compile('failed:.*=>')
