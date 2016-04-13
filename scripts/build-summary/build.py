@@ -96,10 +96,9 @@ class Build(object):
         lines += open_log('archive/artifacts/runcmd-bash.log')
         lines += open_log('archive/artifacts/deploy.sh.log')
 
-        if self.result == 'ABORTED':
-            self.timeout(lines)
-        if self.result == 'FAILURE':
+        if self.result in ['ABORTED', 'FAILURE']:
             # Generic Failures
+            self.timeout(lines)
             self.ssh_fail(lines)
             self.too_many_retries(lines)
             self.ansible_task_fail(lines)
@@ -116,6 +115,7 @@ class Build(object):
             # Heat related failures
             self.create_fail(lines)
             self.archive_fail(lines)
+            self.rate_limit(lines)
 
             # Disabled Failures
             # self.setup_tools_sql_alchemy(lines)
@@ -131,6 +131,13 @@ class Build(object):
 
         if not self.failures:
             self.failures.add("Unknown Failure")
+
+    def rate_limit(self, lines):
+        match_re = re.compile("Rate limit has been reached.")
+        for i, line in enumerate(lines):
+            match = match_re.search(line)
+            if match:
+                self.failures.add('Rate limit has been reached.')
 
     def archive_fail(self, lines):
         match_re = re.compile(
