@@ -129,9 +129,7 @@ ceph_config:
   devices:
     - /dev/sdc
     - /dev/sdd
-    - /dev/sde
   raw_journal_devices:
-    - /dev/sdb
     - /dev/sdb
     - /dev/sdb
 
