@@ -115,6 +115,7 @@ class Build(object):
             # Heat related failures
             self.create_fail(lines)
             self.archive_fail(lines)
+            self.rate_limit(lines)
 
             # Disabled Failures
             # self.setup_tools_sql_alchemy(lines)
@@ -130,6 +131,13 @@ class Build(object):
 
         if not self.failures:
             self.failures.add("Unknown Failure")
+
+    def rate_limit(self, lines):
+        match_re = re.compile("Rate limit has been reached.")
+        for i, line in enumerate(lines):
+            match = match_re.search(line)
+            if match:
+                self.failures.add('Rate limit has been reached.')
 
     def archive_fail(self, lines):
         match_re = re.compile(
