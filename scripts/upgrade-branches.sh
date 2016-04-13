@@ -80,24 +80,24 @@ previous_major_version=$(git tag --list r$(expr ${branch_major_number} - 1).* | 
 
 
 if [[ $current_patch_version != '' ]]; then
-  test_branches="from-$current_patch_version"
+  test_branches="patch-from-$current_patch_version"
 else
   test_branches=''
 fi
 
 # Assume cannot upgrade to 0 minor release
 if [[ $previous_major_version != '' ]] && [[ $branch_minor_number != 0 ]]; then
-  test_branches="$test_branches from-$previous_major_version"
+  test_branches="$test_branches major-from-$previous_major_version"
 fi
 if [[ $previous_minor_version != '' ]]; then
-  test_branches="$test_branches from-$previous_minor_version"
+  test_branches="$test_branches minor-from-$previous_minor_version"
 fi
 
 # Assume upgrading to first minor not possible
 if [[ $next_major_version != '' ]] && [[ $next_minor_version != '' ]] && [[ $(echo $next_major_version | egrep -o '\.[0-9]+\.' | cut -d. -f2) != 0 ]]; then
-  test_branches="$test_branches to-$next_major_version"
+  test_branches="$test_branches major-to-$next_major_version"
 elif [[ $next_minor_version != '' ]]; then
-  test_branches="$test_branches to-$next_minor_version"
+  test_branches="$test_branches minor-to-$next_minor_version"
 fi
 
 echo $test_branches
