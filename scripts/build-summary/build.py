@@ -96,10 +96,9 @@ class Build(object):
         lines += open_log('archive/artifacts/runcmd-bash.log')
         lines += open_log('archive/artifacts/deploy.sh.log')
 
-        if self.result == 'ABORTED':
-            self.timeout(lines)
-        if self.result == 'FAILURE':
+        if self.result in ['ABORTED', 'FAILURE']:
             # Generic Failures
+            self.timeout(lines)
             self.ssh_fail(lines)
             self.too_many_retries(lines)
             self.ansible_task_fail(lines)
