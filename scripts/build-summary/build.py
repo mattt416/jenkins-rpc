@@ -366,16 +366,16 @@ class Build(object):
                 previous_task=previous_task))
 
     def timeout(self, lines):
-        match_str = ('Build timed out (after 20 minutes). '
-                     'Marking the build as aborted.\n')
-        try:
-            timeout_line = lines.index(match_str)
-        except ValueError:
-            return
-        previous_task = self.get_previous_task(timeout_line, lines)
-        self.failures.add(
-            'Inactivity Timeout: {previous_task}'.format(
-                previous_task=previous_task))
+        match_re = ('Build timed out \(after [0-9]* minutes\). '
+                    'Marking the build as aborted.')
+        pattern = re.compile(match_re)
+        for i, line in enumerate(lines):
+            if pattern.search(line):
+                previous_task = self.get_previous_task(i, lines)
+                self.failures.add(
+                    'Build Timeout: {previous_task}'.format(
+                        previous_task=previous_task))
+                break
 
     def apt_mirror_fail(self, lines):
         match_str = ("WARNING: The following packages cannot be "
