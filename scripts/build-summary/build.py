@@ -104,6 +104,7 @@ class Build(object):
             self.ansible_task_fail(lines)
             self.tempestfail(lines)
             self.cannot_find_role(lines)
+            self.invalid_ansible_param(lines)
 
             # Specific Failures
             self.service_unavailable(lines)
@@ -131,6 +132,14 @@ class Build(object):
 
         if not self.failures:
             self.failures.add("Unknown Failure")
+
+    def invalid_ansible_param(self, lines):
+        match_re = re.compile("ERROR:.*is not a legal parameter in an "
+                              "Ansible task or handler")
+        for line in lines:
+            match = match_re.search(line)
+            if match:
+                self.failures.add(match.group())
 
     def rate_limit(self, lines):
         match_re = re.compile("Rate limit has been reached.")
