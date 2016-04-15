@@ -145,7 +145,7 @@ $(document).ready( function () {
         <th>Oldest</th>
         <th>Oldest Job ID</th>
         <th>Newest</th>
-        <th>Newest Job ID</th>
+        <th>Newest Job Timestamp For Sorting</th>
       </tr>
     </thead>
     <tbody>
@@ -157,7 +157,7 @@ $(document).ready( function () {
       <td><a href="http://jenkins.propter.net/job/{{fail.oldest_bobj.job_name}}/{{fail.oldest_job}}/">{{fail.oldest|hdate}}</a></td>
       <td>{{fail.oldest_job}}</td>
       <td><a href="http://jenkins.propter.net/job/{{fail.newest_bobj.job_name}}/{{fail.newest_job}}/">{{fail.newest|hdate}}</a></td>
-      <td>{{fail.newest_job}}</td>
+      <td>{{fail.newest_bobj.timestamp}}</td>
     </tr>
     {% endfor %}
     </tbody>
