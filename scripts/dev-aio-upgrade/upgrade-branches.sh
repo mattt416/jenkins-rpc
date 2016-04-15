@@ -17,7 +17,39 @@ function check_tag {
   fi
 }
 
+# Add upgrade path to array of upgrade paths.
+# each upgrade path has a type, from label, to label and corresponding SHAs
+
+function getsha(){
+  ref="$1"
+  git rev-parse --short origin/$ref 2>/dev/null|| \
+    git rev-parse --short $ref
+}
+function addpath(){
+  upg_type="$1"
+  from="$2"
+  to="$3"
+  from_sha="$(getsha $from)"
+  to_sha="$(getsha $to)"
+  test_paths=(${test_paths[@]} "${upg_type}_${from}_${to}_${from_sha}_${to_sha}")
+}
+
+# remove paths that are not useful
+# currently this only removes paths whos start and end SHAs are the same,
+# but other filters may be added in future
+function filter_paths(){
+  while read path; do
+    fields=(${path//_/ })
+    from_sha=${fields[3]}
+    to_sha=${fields[4]}
+    if [[ $from_sha != $to_sha ]]; then
+      echo $path
+    fi
+  done
+}
+
 function find_paths(){
+  test_paths=()
   current_branch="$1"
   closest_tag=$(git describe --tags --abbrev=0 origin/$current_branch)
 
@@ -81,27 +113,25 @@ function find_paths(){
 
 
   if [[ $current_patch_version != '' ]]; then
-    test_branches="patch-from-$current_patch_version"
-  else
-    test_branches=''
+    addpath patch "$current_patch_version" "$current_branch"
   fi
 
   # Assume cannot upgrade to 0 minor release
   if [[ $previous_major_version != '' ]] && [[ $branch_minor_number != 0 ]]; then
-    test_branches="$test_branches major-from-$previous_major_version"
+    addpath major "$previous_major_version" "$current_branch"
   fi
   if [[ $previous_minor_version != '' ]]; then
-    test_branches="$test_branches minor-from-$previous_minor_version"
+    addpath minor "$previous_minor_version" "$current_branch"
   fi
 
   # Assume upgrading to first minor not possible
   if [[ $next_major_version != '' ]] && [[ $next_minor_version != '' ]] && [[ $(echo $next_major_version | egrep -o '\.[0-9]+\.' | cut -d. -f2) != 0 ]]; then
-    test_branches="$test_branches major-to-$next_major_version"
+    addpath major "$current_branch" "$next_major_version"
   elif [[ $next_minor_version != '' ]]; then
-    test_branches="$test_branches minor-to-$next_minor_version"
+    addpath minor "$current_branch" "$next_minor_version"
   fi
 
-  echo $test_branches
+  echo ${test_paths[@]}
 }
 
 # --- Main ---
@@ -114,5 +144,8 @@ fi
 
 for branch in $branches
 do
-  echo "$branch: $(find_paths "$branch")"
-done
+  for path in $(find_paths "$branch"|filter_paths)
+  do
+    echo $path
+  done
+done |sort -V
