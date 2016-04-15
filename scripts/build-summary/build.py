@@ -113,6 +113,7 @@ class Build(object):
             self.rsync_fail(lines)
             self.elasticsearch_plugin_install(lines)
             self.portnotfound(lines)
+            self.tempest_filter_fail(lines)
 
             # Heat related failures
             self.create_fail(lines)
@@ -133,6 +134,15 @@ class Build(object):
 
         if not self.failures:
             self.failures.add("Unknown Failure")
+
+    def tempest_filter_fail(self, lines):
+        match_re = re.compile("'Filter (.*) failed\.")
+        for line in lines:
+            match = match_re.search(line)
+            if match:
+                self.failures.add("Openstack Tempest Gate test "
+                                  "set filter {fail} failed.".format(
+                                      fail=match.group(1)))
 
     def jenkins_exception(self, lines):
         match_re = re.compile("hudson\.[^ ]*Exception.*")
