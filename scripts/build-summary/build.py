@@ -104,6 +104,8 @@ class Build(object):
             self.ansible_task_fail(lines)
             self.tempestfail(lines)
             self.cannot_find_role(lines)
+            self.invalid_ansible_param(lines)
+            self.jenkins_exception(lines)
 
             # Specific Failures
             self.service_unavailable(lines)
@@ -111,6 +113,7 @@ class Build(object):
             self.rsync_fail(lines)
             self.elasticsearch_plugin_install(lines)
             self.portnotfound(lines)
+            self.tempest_filter_fail(lines)
 
             # Heat related failures
             self.create_fail(lines)
@@ -131,6 +134,30 @@ class Build(object):
 
         if not self.failures:
             self.failures.add("Unknown Failure")
+
+    def tempest_filter_fail(self, lines):
+        match_re = re.compile("'Filter (.*) failed\.")
+        for line in lines:
+            match = match_re.search(line)
+            if match:
+                self.failures.add("Openstack Tempest Gate test "
+                                  "set filter {fail} failed.".format(
+                                      fail=match.group(1)))
+
+    def jenkins_exception(self, lines):
+        match_re = re.compile("hudson\.[^ ]*Exception.*")
+        for line in lines:
+            match = match_re.search(line)
+            if match:
+                self.failures.add(match.group())
+
+    def invalid_ansible_param(self, lines):
+        match_re = re.compile("ERROR:.*is not a legal parameter in an "
+                              "Ansible task or handler")
+        for line in lines:
+            match = match_re.search(line)
+            if match:
+                self.failures.add(match.group())
 
     def rate_limit(self, lines):
         match_re = re.compile("Rate limit has been reached.")
@@ -366,16 +393,16 @@ class Build(object):
                 previous_task=previous_task))
 
     def timeout(self, lines):
-        match_str = ('Build timed out (after 20 minutes). '
-                     'Marking the build as aborted.\n')
-        try:
-            timeout_line = lines.index(match_str)
-        except ValueError:
-            return
-        previous_task = self.get_previous_task(timeout_line, lines)
-        self.failures.add(
-            'Inactivity Timeout: {previous_task}'.format(
-                previous_task=previous_task))
+        match_re = ('Build timed out \(after [0-9]* minutes\). '
+                    'Marking the build as aborted.')
+        pattern = re.compile(match_re)
+        for i, line in enumerate(lines):
+            if pattern.search(line):
+                previous_task = self.get_previous_task(i, lines)
+                self.failures.add(
+                    'Build Timeout: {previous_task}'.format(
+                        previous_task=previous_task))
+                break
 
     def apt_mirror_fail(self, lines):
         match_str = ("WARNING: The following packages cannot be "
