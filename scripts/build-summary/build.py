@@ -105,6 +105,7 @@ class Build(object):
             self.tempestfail(lines)
             self.cannot_find_role(lines)
             self.invalid_ansible_param(lines)
+            self.jenkins_exception(lines)
 
             # Specific Failures
             self.service_unavailable(lines)
@@ -132,6 +133,13 @@ class Build(object):
 
         if not self.failures:
             self.failures.add("Unknown Failure")
+
+    def jenkins_exception(self, lines):
+        match_re = re.compile("hudson\.[^ ]*Exception.*")
+        for line in lines:
+            match = match_re.search(line)
+            if match:
+                self.failures.add(match.group())
 
     def invalid_ansible_param(self, lines):
         match_re = re.compile("ERROR:.*is not a legal parameter in an "
