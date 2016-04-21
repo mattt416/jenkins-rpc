@@ -128,23 +128,35 @@ if [ "$UPGRADE" == "yes" ] && [ "$OVERALL_RESULT" -eq 0 ];
       exit 1
     }
     git submodule update --init
-
     echo "********************** Run RPC Deploy Script ***********************"
-
-    sudo \
-      TERM=linux \
-      DEPLOY_AIO=no \
-      DEPLOY_HAPROXY=yes \
-      DEPLOY_TEMPEST=yes \
-      DEPLOY_CEPH=${DEPLOY_CEPH} \
-      DEPLOY_SWIFT=${DEPLOY_SWIFT} \
-      DEPLOY_MAAS=${DEPLOY_MAAS} \
-      ANSIBLE_GIT_RELEASE=ssh_retry \
-      ANSIBLE_GIT_REPO="https://github.com/hughsaunders/ansible" \
-      ADD_NEUTRON_AGENT_CHECKSUM_RULE=yes \
-      BOOTSTRAP_OPTS=$BOOTSTRAP_OPTS \
-      scripts/upgrade.sh
-
+    if [[ "$UPGRADE_TYPE" == "major" ]]; then
+      sudo \
+        TERM=linux \
+        DEPLOY_AIO=no \
+        DEPLOY_HAPROXY=yes \
+        DEPLOY_TEMPEST=yes \
+        DEPLOY_CEPH=${DEPLOY_CEPH} \
+        DEPLOY_SWIFT=${DEPLOY_SWIFT} \
+        DEPLOY_MAAS=${DEPLOY_MAAS} \
+        ANSIBLE_GIT_RELEASE=ssh_retry \
+        ANSIBLE_GIT_REPO="https://github.com/hughsaunders/ansible" \
+        ADD_NEUTRON_AGENT_CHECKSUM_RULE=yes \
+        BOOTSTRAP_OPTS=$BOOTSTRAP_OPTS \
+        scripts/upgrade.sh
+    else
+      sudo \
+        DEPLOY_AIO=yes \
+        DEPLOY_HAPROXY=yes \
+        DEPLOY_TEMPEST=yes \
+        DEPLOY_CEPH=${DEPLOY_CEPH} \
+        DEPLOY_SWIFT=${DEPLOY_SWIFT} \
+        DEPLOY_MAAS=${DEPLOY_MAAS} \
+        ANSIBLE_GIT_RELEASE=ssh_retry \
+        ANSIBLE_GIT_REPO="https://github.com/hughsaunders/ansible" \
+        ADD_NEUTRON_AGENT_CHECKSUM_RULE=yes \
+        BOOTSTRAP_OPTS=$BOOTSTRAP_OPTS \
+        scripts/deploy.sh
+    fi
     DEPLOY_RC=$?
 
     echo "********************** Run Tempest ***********************"
