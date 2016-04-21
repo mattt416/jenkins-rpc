@@ -122,11 +122,13 @@ if [ "$UPGRADE" == "yes" ] && [ "$OVERALL_RESULT" -eq 0 ];
 
     git stash
     git checkout ${sha1}
-    echo "Rebasing ${sha1} on ${ghprbTargetBranch}"
-    git rebase origin/${ghprbTargetBranch} || {
-      echo "Rebase failed, quitting"
-      exit 1
-    }
+    if [[ ! -z "${ghprbTargetBranch}" ]]; then
+      echo "Rebasing ${sha1} on ${ghprbTargetBranch}"
+      git rebase origin/${ghprbTargetBranch} || {
+        echo "Rebase failed, quitting"
+        exit 1
+      }
+    fi
     git submodule update --init
     echo "********************** Run RPC Deploy Script ***********************"
     if [[ "$UPGRADE_TYPE" == "major" ]]; then
