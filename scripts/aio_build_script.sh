@@ -40,6 +40,7 @@ else
     }
 fi
 
+git submodule sync
 git submodule update --init
 
 # git plugin checks out repo to root of workspace
@@ -129,6 +130,7 @@ if [ "$UPGRADE" == "yes" ] && [ "$OVERALL_RESULT" -eq 0 ];
         exit 1
       }
     fi
+    git submodule sync
     git submodule update --init
     echo "********************** Run RPC Deploy Script ***********************"
     if [[ "$UPGRADE_TYPE" == "major" ]]; then
