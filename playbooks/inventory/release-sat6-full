@@ -30,7 +30,7 @@ node98
 
 [compute]
 node94
-node101
+node107
 node108
 node113
 node114
@@ -48,7 +48,7 @@ node118
 node119
 
 [haproxy]
-node107
+node121
 
 [logger]
-node121
+node101
