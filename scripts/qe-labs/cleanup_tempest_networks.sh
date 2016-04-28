@@ -3,7 +3,7 @@
 ## Shell Opts ----------------------------------------------------------------
 set -x
 
-# Ensure python-neutronclient is isntalled
+# Ensure python-neutronclient is installed
 type neutron >/dev/null 2>&1 || { echo >&2 "python-neutronclient is not installed.  Aborting."; exit 1; }
 
 # All tempest neutron networks
