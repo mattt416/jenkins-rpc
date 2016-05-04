@@ -114,6 +114,7 @@ class Build(object):
             self.elasticsearch_plugin_install(lines)
             self.portnotfound(lines)
             self.tempest_filter_fail(lines)
+            self.compile_fail(lines)
 
             # Heat related failures
             self.create_fail(lines)
@@ -134,6 +135,14 @@ class Build(object):
 
         if not self.failures:
             self.failures.add("Unknown Failure")
+
+    def compile_fail(self, lines):
+        match_re = re.compile("fatal error:(.*)")
+        for line in lines:
+            match = match_re.search(line)
+            if match:
+                self.failures.add("gcc fail: {fail}".format(
+                                  fail=match.group(1)))
 
     def tempest_filter_fail(self, lines):
         match_re = re.compile("'Filter (.*) failed\.")
