@@ -1,6 +1,10 @@
 #!/bin/bash -x
 
 env > buildenv
+log_git_status(){
+  git submodule status
+  git branch -v
+}
 
 #fix sudoers because jenkins jcloud plugin stamps on it.
 sudo tee -a /etc/sudoers <<ESUDOERS
@@ -41,6 +45,7 @@ else
 fi
 
 git submodule update --init
+log_git_status
 
 # git plugin checks out repo to root of workspace
 # but deploy script expects checkout in /opt/rpc-openstack
@@ -130,6 +135,7 @@ if [ "$UPGRADE" == "yes" ] && [ "$OVERALL_RESULT" -eq 0 ];
       }
     fi
     git submodule update --init
+    log_git_status
     echo "********************** Run RPC Deploy Script ***********************"
     if [[ "$UPGRADE_TYPE" == "major" ]]; then
       sudo \
