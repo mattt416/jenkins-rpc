@@ -114,6 +114,7 @@ class Build(object):
             self.elasticsearch_plugin_install(lines)
             self.portnotfound(lines)
             self.tempest_filter_fail(lines)
+            self.tempest_testlist_fail(lines)
             self.compile_fail(lines)
 
             # Heat related failures
@@ -152,6 +153,14 @@ class Build(object):
                 self.failures.add("Openstack Tempest Gate test "
                                   "set filter {fail} failed.".format(
                                       fail=match.group(1)))
+
+    def tempest_testlist_fail(self, lines):
+        match_re = re.compile("exit_msg 'Failed to generate test list'")
+        for line in lines:
+            match = match_re.search(line)
+            if match:
+                self.failures.add("Openstack Tempest Gate: "
+                                  "failed to generate test list")
 
     def jenkins_exception(self, lines):
         match_re = re.compile("hudson\.[^ ]*Exception.*")
