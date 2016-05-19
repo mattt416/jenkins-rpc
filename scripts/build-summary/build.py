@@ -106,6 +106,7 @@ class Build(object):
             self.cannot_find_role(lines)
             self.invalid_ansible_param(lines)
             self.jenkins_exception(lines)
+            self.pip_cannot_find(lines)
 
             # Specific Failures
             self.service_unavailable(lines)
@@ -116,6 +117,7 @@ class Build(object):
             self.tempest_filter_fail(lines)
             self.tempest_testlist_fail(lines)
             self.compile_fail(lines)
+            self.apt_fail(lines)
 
             # Heat related failures
             self.create_fail(lines)
@@ -136,6 +138,25 @@ class Build(object):
 
         if not self.failures:
             self.failures.add("Unknown Failure")
+
+    def pip_cannot_find(self, lines):
+        match_re = re.compile("Could not find a version that satisfies "
+                              "the requirement ([^ ]*)")
+        for i, line in enumerate(lines):
+            match = match_re.search(line)
+            if match:
+                if not self.failure_ignored(i, lines):
+                    self.failures.add("Can't find pip package: {fail}".format(
+                                      fail=match.group(1)))
+
+    def apt_fail(self, lines):
+        match_re = re.compile("W: Failed to fetch (.*) *Hash Sum mismatch")
+        for line in lines:
+            match = match_re.search(line)
+            if match:
+                self.failures.add("Apt Hash Sum mismatch: {fail}".format(
+                                  fail=match.group(1)))
+                break
 
     def compile_fail(self, lines):
         match_re = re.compile("fatal error:(.*)")
