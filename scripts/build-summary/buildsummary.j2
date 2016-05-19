@@ -188,7 +188,13 @@ $(document).ready( function () {
         {% if buildobj.gh_pull %}
         PR#<a href="https://github.com/rcbops/rpc-openstack/pull/{{buildobj.gh_pull|default("")}}">{{buildobj.gh_pull|default("")}}:{{buildobj.gh_title|default("")}} {{buildobj.commit}} </a></td>
         {% endif %}
-      <td><a href="http://jenkins.propter.net/job/{{buildobj.job_name}}/{{buildobj.build_num}}/consoleFull">{{buildobj.failures|join(" ")}}</a></td>
+        <td>
+            <ul>
+              {% for fail in buildobj.failures %}
+              <li><a href="http://jenkins.propter.net/job/{{buildobj.job_name}}/{{buildobj.build_num}}/consoleFull">{{fail}}</a></li>
+              {% endfor %}
+            </ul>
+        </a></td>
     </tr>
     {% endfor %}
     </tbody>
