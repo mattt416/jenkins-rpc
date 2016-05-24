@@ -102,7 +102,8 @@ class Build(object):
             self.ssh_fail(lines)
             self.too_many_retries(lines)
             self.ansible_task_fail(lines)
-            self.tempestfail(lines)
+            self.tempest_test_fail(lines)
+            self.tempest_exception(lines)
             self.cannot_find_role(lines)
             self.invalid_ansible_param(lines)
             self.jenkins_exception(lines)
@@ -113,7 +114,6 @@ class Build(object):
             self.rebase_fail(lines)
             self.rsync_fail(lines)
             self.elasticsearch_plugin_install(lines)
-            self.portnotfound(lines)
             self.tempest_filter_fail(lines)
             self.tempest_testlist_fail(lines)
             self.compile_fail(lines)
@@ -294,18 +294,7 @@ class Build(object):
                                   'Security Group ... in use')
                 break
 
-    def portnotfound(self, lines):
-        match_re = re.compile('neutronclient.common.exceptions.'
-                              'PortNotFoundClient')
-        for i, line in enumerate(lines):
-            match = match_re.search(line)
-            if match:
-                self.failures.add('Nova/Neutron Exception: '
-                                  'neutronclient.common.exceptions'
-                                  '.PortNotFoundClient')
-                break
-
-    def tempestfail(self, lines):
+    def tempest_test_fail(self, lines):
         match_re = re.compile('\{0\} (?P<test>tempest[^ ]*).*\.\.\. FAILED')
         for i, line in enumerate(lines):
             match = match_re.search(line)
@@ -313,6 +302,34 @@ class Build(object):
                 test = match.groupdict()['test']
                 self.failures.add('Tempest Test Failed: {test}'.format(
                     test=test))
+
+    def tempest_exception(self, lines):
+        exc_re = re.compile('tempest\.lib\.exceptions.*')
+        class_re = re.compile("<class '([^']*)'>")
+        details_re = re.compile("Details: (.*)$")
+        uuid_re = re.compile("([0-9a-zA-Z]+-){4}[0-9a-zA-Z]+")
+        ip_re = re.compile("([0-9]+\.){3}[0-9]+")
+        for i, line in enumerate(lines):
+            exc_match = exc_re.search(line)
+            if exc_match:
+                exc = exc_match.group(0)
+                cls = ""
+                details = ""
+                for line in lines[i:i+5]:
+                    details_match = details_re.search(line)
+                    if details_match:
+                        details = details_match.group(1)
+                    class_match = class_re.search(line)
+                    if class_match:
+                        cls = class_match.group(1)
+                failure_string = (
+                    'Tempest Exception: tempest.lib.exceptions.'
+                    '{exc} {details} {cls}'.format(exc=exc,
+                                                   details=details,
+                                                   cls=cls))
+                failure_string = uuid_re.sub('**removed**', failure_string)
+                failure_string = ip_re.sub('**removed**', failure_string)
+                self.failures.add(failure_string)
 
     def elasticsearch_plugin_install(self, lines):
         match_str = 'failed to download out of all possible locations...'
