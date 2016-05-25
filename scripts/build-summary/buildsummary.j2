@@ -35,7 +35,7 @@ function draw_spark(){
         minSpotColor: false,
         maxSpotColor: 'red',
         spotColor: false,
-        width: '100px',
+        width: '125px',
         height: '25px'
     });
 }
@@ -131,6 +131,11 @@ $(document).ready( function () {
         <th>MaaS</th>
         {{ mcell('master_maas_periodic') }}
         {{ mcell('kilo_maas_periodic') }}
+      </tr>
+      <tr>
+        <th>Heat Multinode</th>
+        {{ mcell('master_multinode_periodic') }}
+        <td>N/A</td>
       </tr>
     </tbody>
   </table>

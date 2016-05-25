@@ -30,11 +30,15 @@ class Build(object):
             build_folder=self.build_folder)
         self.env_vars = self.read_env_file(self.env_file)
         self.branch = self.env_vars.get('ghprbTargetBranch', '')
+        if self.branch == '':
+            self.branch = self.env_vars.get('RPC_RELEASE', '')
         self.commit = self.env_vars.get('ghprbActualCommit', '')
         if self.env_vars.get('DEPLOY_CEPH') == 'yes':
             self.btype = 'ceph'
         elif self.env_vars.get('DEPLOY_MAAS') == 'yes':
             self.btype = 'maas'
+        elif self.env_vars.get('HEAT_TEMPLATE', ''):
+            self.btype = 'multinode'
         elif 'defcore' in self.env_vars.get('TEMPEST_TESTS', ''):
             self.btype = 'defcore'
         else:
