@@ -35,12 +35,8 @@ class Build(object):
         self.commit = self.env_vars.get('ghprbActualCommit', '')
         if self.env_vars.get('DEPLOY_CEPH') == 'yes':
             self.btype = 'ceph'
-        elif self.env_vars.get('DEPLOY_MAAS') == 'yes':
-            self.btype = 'maas'
         elif self.env_vars.get('HEAT_TEMPLATE', ''):
             self.btype = 'multinode'
-        elif 'defcore' in self.env_vars.get('TEMPEST_TESTS', ''):
-            self.btype = 'defcore'
         else:
             self.btype = 'full'
         self.get_parent_info()
