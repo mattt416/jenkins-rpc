@@ -181,12 +181,6 @@ if [ "$UPGRADE" == "yes" ] && [ "$OVERALL_RESULT" -eq 0 ];
     OVERALL_RESULT=$?
 
 fi
-# There are a number of AIO failures due the MaaS entity being missing.
-# This is to validate the playbooks are failing correctly.
-if [ "$DEPLOY_MAAS" == "yes" ]
-then
-  raxmon-entities-list --debug
-fi
 echo "Ansible Result: $DEPLOY_RC"
 echo "Tempest Result: $TEMPEST_RC"
 echo "Overall Result: $OVERALL_RESULT"
