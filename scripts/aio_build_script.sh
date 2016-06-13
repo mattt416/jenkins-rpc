@@ -39,6 +39,16 @@ run_holland(){
   sudo lxc-attach -n $(sudo lxc-ls |grep galera|head -n1) -- /bin/bash -c "holland bk"
 }
 
+override_oa(){
+  if [[ "$OA_REPO" != "none" ]]; then
+    pushd openstack-ansible
+      git remote add override $OA_REPO -f
+      git fetch -a
+      git checkout override/$OA_BRANCH
+    popd
+  fi
+}
+
 #fix sudoers because jenkins jcloud plugin stamps on it.
 sudo tee -a /etc/sudoers <<ESUDOERS
 %admin ALL=(ALL) ALL
@@ -79,6 +89,9 @@ fi
 
 git submodule sync
 git submodule update --init
+
+override_oa
+
 log_git_status
 
 # git plugin checks out repo to root of workspace
@@ -153,6 +166,7 @@ if [ "$UPGRADE" == "yes" ] && [ "$OVERALL_RESULT" -eq 0 ];
     fi
     git submodule sync
     git submodule update --init
+    override_oa
     log_git_status
     echo "********************** Run RPC Deploy/Upgrade Script ***********************"
     if [[ "$UPGRADE_TYPE" == "major" ]]; then
