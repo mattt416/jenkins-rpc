@@ -6,6 +6,49 @@ log_git_status(){
   git branch -v
 }
 
+run_rpc_deploy(){
+  sudo \
+    DEPLOY_AIO=yes \
+    DEPLOY_HAPROXY=yes \
+    DEPLOY_TEMPEST=yes \
+    DEPLOY_CEPH=${DEPLOY_CEPH} \
+    DEPLOY_SWIFT=${DEPLOY_SWIFT} \
+    DEPLOY_MAAS=${DEPLOY_MAAS} \
+    ANSIBLE_GIT_RELEASE=ssh_retry \
+    ANSIBLE_GIT_REPO="https://github.com/hughsaunders/ansible" \
+    ADD_NEUTRON_AGENT_CHECKSUM_RULE=yes \
+    BOOTSTRAP_OPTS=$BOOTSTRAP_OPTS \
+    scripts/deploy.sh
+}
+
+calc_result(){
+  [ $DEPLOY_RC == 0 -a $TEMPEST_RC == 0 -a $HOLLAND_RC == 0 ]
+  OVERALL_RESULT=$?
+  echo "Deploy Result: $DEPLOY_RC"
+  echo "Tempest Result: $TEMPEST_RC"
+  echo "Holland Result: $HOLLAND_RC"
+  echo "Overall Result: $OVERALL_RESULT"
+}
+
+run_tempest(){
+  # jenkins user does not have the necessary permissions to run lxc commands
+  # serial needed to ensure all tests
+  sudo lxc-attach -n $(sudo lxc-ls |grep utility) -- /bin/bash -c "RUN_TEMPEST_OPTS='--serial' /opt/openstack_tempest_gate.sh ${TEMPEST_TESTS}"
+}
+run_holland(){
+  sudo lxc-attach -n $(sudo lxc-ls |grep galera|head -n1) -- /bin/bash -c "holland bk"
+}
+
+override_oa(){
+  if [[ "$OA_REPO" != "none" ]]; then
+    pushd openstack-ansible
+      git remote add override $OA_REPO -f
+      git fetch -a
+      git checkout override/$OA_BRANCH
+    popd
+  fi
+}
+
 #fix sudoers because jenkins jcloud plugin stamps on it.
 sudo tee -a /etc/sudoers <<ESUDOERS
 %admin ALL=(ALL) ALL
@@ -46,6 +89,9 @@ fi
 
 git submodule sync
 git submodule update --init
+
+override_oa
+
 log_git_status
 
 # git plugin checks out repo to root of workspace
@@ -93,39 +139,22 @@ export BOOTSTRAP_OPTS="${BOOTSTRAP_OPTS} bootstrap_host_ubuntu_security_repo=${U
 echo "$USER_VARS" | tee -a $uev
 
 echo "********************** Run RPC Deploy Script ***********************"
-
-sudo \
-  DEPLOY_AIO=yes \
-  DEPLOY_HAPROXY=yes \
-  DEPLOY_TEMPEST=yes \
-  DEPLOY_CEPH=${DEPLOY_CEPH} \
-  DEPLOY_SWIFT=${DEPLOY_SWIFT} \
-  DEPLOY_MAAS=${DEPLOY_MAAS} \
-  ANSIBLE_GIT_RELEASE=ssh_retry \
-  ANSIBLE_GIT_REPO="https://github.com/hughsaunders/ansible" \
-  ADD_NEUTRON_AGENT_CHECKSUM_RULE=yes \
-  BOOTSTRAP_OPTS=$BOOTSTRAP_OPTS \
-  scripts/deploy.sh
-
+run_rpc_deploy
 DEPLOY_RC=$?
 
 echo "********************** Run Tempest ***********************"
-
-# jenkins user does not have the necessary permissions to run lxc commands
-# serial needed to ensure all tests
-sudo lxc-attach -n $(sudo lxc-ls |grep utility) -- /bin/bash -c "RUN_TEMPEST_OPTS='--serial' /opt/openstack_tempest_gate.sh ${TEMPEST_TESTS}"
-
+run_tempest
 TEMPEST_RC=$?
 
-[ $DEPLOY_RC == 0 -a $TEMPEST_RC == 0 ]
-OVERALL_RESULT=$?
+echo "********************** Run Holland ***********************"
+run_holland
+HOLLAND_RC=$?
+
+echo "********************** Deployment Result **********************"
+calc_result
 
 if [ "$UPGRADE" == "yes" ] && [ "$OVERALL_RESULT" -eq 0 ];
   then
-    echo "Pre-upgrade Deployment Ansible Result: $DEPLOY_RC"
-    echo "Pre-upgrade Deployment Tempest Result: $TEMPEST_RC"
-    echo "Pre-upgrade Deployment Overall Result: $OVERALL_RESULT"
-
     git stash
     git checkout ${sha1}
     if [[ ! -z "${ghprbTargetBranch}" ]]; then
@@ -137,8 +166,9 @@ if [ "$UPGRADE" == "yes" ] && [ "$OVERALL_RESULT" -eq 0 ];
     fi
     git submodule sync
     git submodule update --init
+    override_oa
     log_git_status
-    echo "********************** Run RPC Deploy Script ***********************"
+    echo "********************** Run RPC Deploy/Upgrade Script ***********************"
     if [[ "$UPGRADE_TYPE" == "major" ]]; then
       sudo \
         TERM=linux \
@@ -154,34 +184,20 @@ if [ "$UPGRADE" == "yes" ] && [ "$OVERALL_RESULT" -eq 0 ];
         BOOTSTRAP_OPTS=$BOOTSTRAP_OPTS \
         scripts/upgrade.sh
     else
-      sudo \
-        DEPLOY_AIO=yes \
-        DEPLOY_HAPROXY=yes \
-        DEPLOY_TEMPEST=yes \
-        DEPLOY_CEPH=${DEPLOY_CEPH} \
-        DEPLOY_SWIFT=${DEPLOY_SWIFT} \
-        DEPLOY_MAAS=${DEPLOY_MAAS} \
-        ANSIBLE_GIT_RELEASE=ssh_retry \
-        ANSIBLE_GIT_REPO="https://github.com/hughsaunders/ansible" \
-        ADD_NEUTRON_AGENT_CHECKSUM_RULE=yes \
-        BOOTSTRAP_OPTS=$BOOTSTRAP_OPTS \
-        scripts/deploy.sh
+      run_rpc_deploy
     fi
     DEPLOY_RC=$?
 
     echo "********************** Run Tempest ***********************"
-
-    # jenkins user does not have the necessary permissions to run lxc commands
-    # serial needed to ensure all tests
-    sudo lxc-attach -n $(sudo lxc-ls |grep utility) -- /bin/bash -c "RUN_TEMPEST_OPTS='--serial' /opt/openstack_tempest_gate.sh ${TEMPEST_TESTS}"
-
+    run_tempest
     TEMPEST_RC=$?
 
-    [ $DEPLOY_RC == 0 -a $TEMPEST_RC == 0 ]
-    OVERALL_RESULT=$?
+    echo "********************** Run Holland ***********************"
+    run_holland
+    HOLLAND_RC=$?
+
+    echo "********************** Post-upgrade results **********************"
+    calc_result
 
 fi
-echo "Ansible Result: $DEPLOY_RC"
-echo "Tempest Result: $TEMPEST_RC"
-echo "Overall Result: $OVERALL_RESULT"
 exit $OVERALL_RESULT
