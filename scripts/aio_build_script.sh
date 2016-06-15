@@ -22,11 +22,10 @@ run_rpc_deploy(){
 }
 
 calc_result(){
-  [ $DEPLOY_RC == 0 -a $TEMPEST_RC == 0 -a $HOLLAND_RC == 0 ]
+  [ $DEPLOY_RC == 0 -a $TEMPEST_RC == 0 ]
   OVERALL_RESULT=$?
   echo "Deploy Result: $DEPLOY_RC"
   echo "Tempest Result: $TEMPEST_RC"
-  echo "Holland Result: $HOLLAND_RC"
   echo "Overall Result: $OVERALL_RESULT"
 }
 
@@ -34,9 +33,6 @@ run_tempest(){
   # jenkins user does not have the necessary permissions to run lxc commands
   # serial needed to ensure all tests
   sudo lxc-attach -n $(sudo lxc-ls |grep utility) -- /bin/bash -c "RUN_TEMPEST_OPTS='--serial' /opt/openstack_tempest_gate.sh ${TEMPEST_TESTS}"
-}
-run_holland(){
-  sudo lxc-attach -n $(sudo lxc-ls |grep galera|head -n1) -- /bin/bash -c "holland bk"
 }
 
 override_oa(){
@@ -146,10 +142,6 @@ echo "********************** Run Tempest ***********************"
 run_tempest
 TEMPEST_RC=$?
 
-echo "********************** Run Holland ***********************"
-run_holland
-HOLLAND_RC=$?
-
 echo "********************** Deployment Result **********************"
 calc_result
 
@@ -191,10 +183,6 @@ if [ "$UPGRADE" == "yes" ] && [ "$OVERALL_RESULT" -eq 0 ];
     echo "********************** Run Tempest ***********************"
     run_tempest
     TEMPEST_RC=$?
-
-    echo "********************** Run Holland ***********************"
-    run_holland
-    HOLLAND_RC=$?
 
     echo "********************** Post-upgrade results **********************"
     calc_result
