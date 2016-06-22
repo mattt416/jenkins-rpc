@@ -103,7 +103,7 @@ uev=/opt/rpc-openstack/rpcd/etc/openstack_deploy/user_extras_variables.yml
 echo "Removing placeholder creds from user_extras_variables"
 
 # Remove placeholder lines
-sudo sed -i '/rackspace_cloud_\(auth_url\|tenant_id\|username\|password\|api_key\):/d' $uev
+sudo sed -i '/rackspace_cloud_\(auth_url\|tenant_id\|username\|password\|api_key\):/d' /opt/rpc-openstack/rpcd/etc/openstack_deploy/*.yml
 
 echo "Adding MAAS creds to user_extras_variables"
 #set +x to avoid leaking creds to the log.
