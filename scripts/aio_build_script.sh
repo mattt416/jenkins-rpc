@@ -1,6 +1,9 @@
 #!/bin/bash -x
 
+# Useful for getting real time feedback from ansible playbook runs
+export PYTHONUNBUFFERED=1
 env > buildenv
+
 log_git_status(){
   git submodule status
   git branch -v
