@@ -118,6 +118,7 @@ class Build(object):
             self.tempest_testlist_fail(lines)
             self.compile_fail(lines)
             self.apt_fail(lines)
+            self.holland_fail(lines)
 
             # Heat related failures
             self.create_fail(lines)
@@ -138,6 +139,15 @@ class Build(object):
 
         if not self.failures:
             self.failures.add("Unknown Failure")
+
+    def holland_fail(self, lines):
+        match_re = re.compile("HOLLAND_RC=1")
+        for i, line in enumerate(lines):
+            match = match_re.search(line)
+            if match:
+                fail = lines[i-1]
+                self.failures.add("Holland failure: {fail}".format(
+                                  fail=fail))
 
     def pip_cannot_find(self, lines):
         match_re = re.compile("Could not find a version that satisfies "
