@@ -10,7 +10,7 @@ log_git_status(){
 }
 
 run_rpc_deploy(){
-  sudo \
+  sudo -E\
     DEPLOY_AIO=yes \
     DEPLOY_HAPROXY=yes \
     DEPLOY_TEMPEST=yes \
@@ -35,7 +35,7 @@ calc_result(){
 run_tempest(){
   # jenkins user does not have the necessary permissions to run lxc commands
   # serial needed to ensure all tests
-  sudo lxc-attach -n $(sudo lxc-ls |grep utility) -- /bin/bash -c "RUN_TEMPEST_OPTS='--serial' /opt/openstack_tempest_gate.sh ${TEMPEST_TESTS}"
+  sudo -E lxc-attach -n $(sudo -E lxc-ls |grep utility) -- /bin/bash -c "RUN_TEMPEST_OPTS='--serial' /opt/openstack_tempest_gate.sh ${TEMPEST_TESTS}"
 }
 
 override_oa(){
@@ -165,7 +165,7 @@ if [ "$UPGRADE" == "yes" ] && [ "$OVERALL_RESULT" -eq 0 ];
     log_git_status
     echo "********************** Run RPC Deploy/Upgrade Script ***********************"
     if [[ "$UPGRADE_TYPE" == "major" ]]; then
-      sudo \
+      sudo -E \
         TERM=linux \
         DEPLOY_AIO=no \
         DEPLOY_HAPROXY=yes \
