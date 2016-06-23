@@ -55,13 +55,13 @@ class Build(object):
         return kvs
 
     def get_parent_info(self):
-
-        upstream_project = self.tree.find('.//upstreamProject')
-        if upstream_project is not None:
-            self.upstream_project = upstream_project.text
-            self.upstream_build_no = self.tree.find('.//upstreamBuild').text
-        else:
+        try:
+            top_level_job = self.tree.xpath('//hudson.model.Cause_-UpstreamCause')[-1]
+            self.upstream_project = top_level_job.find('upstreamProject').text
+            self.upstream_build_no = top_level_job.find('upstreamBuild').text
+        except IndexError:
             self.upstream_project = ""
+
         self.trigger = "periodic"
         prinfo = self.tree.find('.//org.jenkinsci.plugins.ghprb.GhprbCause')
         if prinfo is not None:
