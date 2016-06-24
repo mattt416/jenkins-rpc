@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<style>
+html, body{
+    height:100%;
+    width:100%;
+    padding:0;
+    margin:0;
+    white-space: normal;
+}
+div.container-fluid {
+  width:100%;
+}
+div.result-table {
+  margin: auto;
+  width: 95%;
+}
+</style>
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -94,9 +110,6 @@ $(document).ready( function () {
       </ul>
     </div>
   </nav>
-  <div>
-    <h4> Generated: {{timestamp.isoformat() }} </h4>
-  </div>
 
   {% macro mcell(idstring) %}
     {% set p = buildcount[idstring].s_percent %}
@@ -106,6 +119,7 @@ $(document).ready( function () {
     </td>
   {% endmacro %}
 
+  <div class="result-table" id="periodic">
   <h3> Periodic Build Success (Last 48 Hours)</h3>
   <table id="summary" class="table">
     <thead>
@@ -129,7 +143,9 @@ $(document).ready( function () {
       </tr>
     </tbody>
   </table>
+  </div>
 
+  <div class="result-table" id="failcount">
   <h3>Failure Count (30 days)</h3>
   <table id="failures" class="table">
     <thead>
@@ -157,16 +173,16 @@ $(document).ready( function () {
     {% endfor %}
     </tbody>
   </table>
+  </div>
+ <div id="builds" class="result-table">
  <h3>Recent Results (30 Days)</h3>
   <table id="jobs" class="table">
     <thead>
       <tr>
         <th>Date for Sorting</th>
         <th>Date / Result</th>
-        <th>Job</th>
         <th>Branch</th>
-        <th>Build Num</th>
-        <th>Parent Build</th>
+        <th>Job Tree</th>
         <th>Failures</th>
       </tr>
     </thead>
@@ -175,18 +191,12 @@ $(document).ready( function () {
     <tr class="{{ "success" if buildobj.result == "SUCCESS" else 'danger' }}">
       <td>{{buildobj.timestamp}}</td>
       <td>{{buildobj.timestamp|hdate}} {{buildobj.result}}</td>
-      <td>{{buildobj.job_name}}</td>
       <td>{{buildobj.branch}}</td>
-      <td><a href="http://jenkins.propter.net/job/{{buildobj.job_name}}/{{buildobj.build_num}}/">{{buildobj.build_num}}</a></td>
-      <!--<td><a href="http://jenkins.propter.net/job/{{buildobj.job_name}}/">{{buildobj.job_name}}</a></td> -->
-      <td><a href="http://jenkins.propter.net/job/{{buildobj.upstream_project}}/">{{buildobj.upstream_project}}</a> (Build #<a href="http://jenkins.propter.net/job/{{buildobj.upstream_project}}/{{buildobj.upstream_build_no}}">{{buildobj.upstream_build_no}}</a>)
-        {% if buildobj.gh_pull %}
-        PR#<a href="https://github.com/rcbops/rpc-openstack/pull/{{buildobj.gh_pull|default("")}}">{{buildobj.gh_pull|default("")}}:{{buildobj.gh_title|default("")}} {{buildobj.commit}} </a></td>
-        {% endif %}
+      <td><ul>{% for build in buildobj.build_hierachy %}<li><a href="{{build.url}}">{{build.name}} {{build.build_num}}</a></li>{% endfor %}</td>
         <td>
             <ul>
               {% for fail in buildobj.failures %}
-              <li><a href="http://jenkins.propter.net/job/{{buildobj.job_name}}/{{buildobj.build_num}}/consoleFull">{{fail}}</a></li>
+              <li class="failure"><a href="http://jenkins.propter.net/job/{{buildobj.job_name}}/{{buildobj.build_num}}/consoleFull">{{fail|replace(".",".<wbr>")|replace("_","_<wbr>")}}</a></li>
               {% endfor %}
             </ul>
         </a></td>
@@ -194,6 +204,10 @@ $(document).ready( function () {
     {% endfor %}
     </tbody>
   </table>
+</div>
+  <div>
+    <h4> Generated: {{timestamp.isoformat() }} </h4>
+  </div>
 </div>
 </body>
 </html>
