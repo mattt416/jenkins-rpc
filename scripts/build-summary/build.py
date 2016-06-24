@@ -55,22 +55,47 @@ class Build(object):
         return kvs
 
     def get_parent_info(self):
-        try:
-            top_level_job = self.tree.xpath('//hudson.model.Cause_-UpstreamCause')[-1]
-            self.upstream_project = top_level_job.find('upstreamProject').text
-            self.upstream_build_no = top_level_job.find('upstreamBuild').text
-        except IndexError:
-            self.upstream_project = ""
-
+        jenkins_base = "http://jenkins.propter.net/"
         self.trigger = "periodic"
-        prinfo = self.tree.find('.//org.jenkinsci.plugins.ghprb.GhprbCause')
-        if prinfo is not None:
-            # build started by pr
-            self.trigger = "pr"
-            self.gh_pull = self.tree.find('.//pullID').text
-            self.gh_target = self.tree.find('.//targetBranch').text
-            self.gh_title = self.tree.find(
-                './/org.jenkinsci.plugins.ghprb.GhprbCause/title').text
+        self.build_hierachy = []
+        cause_elems = self.tree.xpath('//causes | //upstreamCauses')
+        for cause_elem in reversed(cause_elems):
+            cause_dict = {}
+            upstream_project = cause_elem.find('.//upstreamProject')
+            if upstream_project is not None:
+                cause_dict['name'] = upstream_project.text
+                cause_dict['build_num'] = \
+                    cause_elem.find('.//upstreamBuild').text
+                cause_dict['url'] = (
+                    "{jenkins}/{job}/{build}".format(
+                        jenkins=jenkins_base,
+                        job=cause_elem.find('.//upstreamUrl').text,
+                        build=cause_dict['build_num']))
+                if cause_dict:
+                    self.build_hierachy.append(cause_dict)
+                    continue
+
+            pullID = cause_elem.find('.//pullID')
+            if pullID is not None:
+                cause_dict['name'] = "PR: {title}".format(
+                    title=cause_elem.find('.//title').text)
+                cause_dict['build_num'] = pullID.text
+                cause_dict['url'] = cause_elem.find('.//url').text
+                self.trigger = "pr"
+                self.gh_pull = pullID.text
+                self.gh_target = cause_elem.find('.//targetBranch').text
+                self.gh_title = cause_dict['name']
+                if cause_dict:
+                    self.build_hierachy.append(cause_dict)
+
+        # Add currrent job to causes as its the last step in the hierachy
+        self.build_hierachy.append(dict(
+            name=self.job_name,
+            build_num=self.build_num,
+            url="{jenkins}/job/{job}/{build_num}".format(
+                jenkins=jenkins_base,
+                job=self.job_name,
+                build_num=self.build_num)))
 
     def get_failure_info(self):
         def open_log(filename):
@@ -493,13 +518,13 @@ class Build(object):
 
     def __str__(self):
         s = ("{timestamp} {result} {job_name}/{build_num} --> "
-             "{upstream_project}/{upstream_build_no}").format(
+             "{upstream_project}/{upstream_build_num}").format(
             timestamp=self.timestamp.isoformat(),
             job_name=self.job_name,
             build_num=self.build_num,
             result=self.result,
             upstream_project=self.upstream_project,
-            upstream_build_no=self.upstream_build_no)
+            upstream_build_num=self.upstream_build_num)
         if hasattr(self, 'gh_pull'):
             s += ' pr/{gh_pull} target:{gh_target} "{gh_title}"'.format(
                 gh_pull=self.gh_pull,
