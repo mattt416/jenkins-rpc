@@ -103,7 +103,7 @@ sudo ln -s $PWD /opt/rpc-openstack
 
 
 ## Add MAAS credentials
-uev=/opt/rpc-openstack/rpcd/etc/openstack_deploy/user_extras_variables.yml
+uev=/opt/rpc-openstack/rpcd/etc/openstack_deploy/user_zzz_gating_variables.yml
 echo "Removing placeholder creds from user_extras_variables"
 
 # Remove placeholder lines
@@ -113,6 +113,7 @@ echo "Adding MAAS creds to user_extras_variables"
 #set +x to avoid leaking creds to the log.
 set +x
 sudo tee -a $uev &>/dev/null <<EOVARS
+---
 rackspace_cloud_auth_url: ${rackspace_cloud_auth_url}
 rackspace_cloud_tenant_id: ${rackspace_cloud_tenant_id}
 rackspace_cloud_username: ${rackspace_cloud_username}
