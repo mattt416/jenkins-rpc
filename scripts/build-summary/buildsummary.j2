@@ -123,17 +123,19 @@ $(document).ready( function () {
   <h3> Periodic Build Success (Last 48 Hours)</h3>
   <table id="summary" class="table">
     <thead>
-      <tr><th></th><th>Master</th><th>Kilo</th></tr>
+      <tr><th></th><th>Master</th><th>Liberty</th><th>Kilo</th></tr>
     </thead>
     <tbody>
       <tr>
         <th>Full</th>
         {{ mcell('master_full_periodic') }}
+        {{ mcell('liberty_12_2_full_periodic') }}
         {{ mcell('kilo_full_periodic') }}
       </tr>
       <tr>
         <th>Ceph</th>
         {{ mcell('master_ceph_periodic') }}
+        {{ mcell('liberty_12_2_ceph_periodic') }}
         {{ mcell('kilo_ceph_periodic') }}
       </tr>
       <tr>
