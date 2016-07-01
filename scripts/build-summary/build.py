@@ -29,9 +29,10 @@ class Build(object):
         self.env_file = '{build_folder}/injectedEnvVars.txt'.format(
             build_folder=self.build_folder)
         self.env_vars = self.read_env_file(self.env_file)
-        self.branch = self.env_vars.get('ghprbTargetBranch', '')
-        if self.branch == '':
-            self.branch = self.env_vars.get('RPC_RELEASE', '')
+        self.raw_branch = self.env_vars.get('ghprbTargetBranch', '')
+        if self.raw_branch == '':
+            self.raw_branch = self.env_vars.get('RPC_RELEASE', '')
+        self.branch = self.raw_branch.replace('-', '_').replace('.', '_')
         self.commit = self.env_vars.get('ghprbActualCommit', '')
         if self.env_vars.get('DEPLOY_CEPH') == 'yes':
             self.btype = 'ceph'
