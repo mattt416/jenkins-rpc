@@ -112,7 +112,7 @@ sudo sed -i '/rackspace_cloud_\(auth_url\|tenant_id\|username\|password\|api_key
 echo "Adding MAAS creds to user_extras_variables"
 #set +x to avoid leaking creds to the log.
 set +x
-sudo tee -a $uev &>/dev/null <<EOVARS
+tee -a $uev &>/dev/null <<EOVARS
 ---
 rackspace_cloud_auth_url: ${rackspace_cloud_auth_url}
 rackspace_cloud_tenant_id: ${rackspace_cloud_tenant_id}
@@ -123,7 +123,7 @@ EOVARS
 set -x
 
 #Supply fixed cirros image while empty key bug is not fixed upstream.
-sudo tee -a $uev &>/dev/null <<EOVARS
+tee -a $uev &>/dev/null <<EOVARS
 cirros_img_url: "http://rpc-repo.rackspace.com/rpcgating/cirros-0.3.4-x86_64-dropbearmod.img"
 tempest_images:
   - url: "{{cirros_img_url}}"
