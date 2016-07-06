@@ -1,0 +1,97 @@
+## Macros for repeated blocks
+
+# Define the github project associated with jenkins rpc
+- property:
+    name: jenkins-rpc-github
+    properties:
+      - github:
+          url: https://github.com/rcbops/jenkins-rpc
+
+# Define the scm/git repo associated with jenkins-rpc
+- scm:
+    name: jenkins-rpc-git
+    scm:
+      - git:
+          url: https://github.com/rcbops/jenkins-rpc
+          branches:
+            - master
+          refspec: "+refs/pull/*:refs/remotes/origin/pr/* +refs/heads/*:refs/remotes/origin/*"
+          name: origin
+
+# This project instantiates the JJB-Jenkins-RPC-PR-{type} template twice
+# to create an aio and an upgrade job.
+- project:
+    name: JJB-Jenkins-RPC-PR-Jobs
+    jobs:
+      - 'JJB-Jenkins-RPC-PR-{type}':
+          type: upgrade
+          upgrade: yes
+      - 'JJB-Jenkins-RPC-PR-{type}':
+          type: aio
+          upgrade: no
+
+## Job Definitions
+# This template is for testing PRs against Jenkins-RPC
+# It is triggered by PR and runs an AIO with the proposed version
+# of jenkins-rpc.
+
+# This template has two variables - type and upgrade.
+- job-template:
+    name: "JJB-Jenkins-RPC-PR-{type}"
+    display-name: "JJB-Jenkins-RPC-PR-{type}"
+    project-type: freestyle
+    description: 'Managed by JJB: Test changes to jenkins-rpc'
+    defaults: global
+    disabled: false
+    concurrent: true
+    node: master
+    logrotate:
+      daysToKeep: 30
+    properties:
+      - jenkins-rpc-github
+    scm:
+      - jenkins-rpc-git
+    triggers:
+      - github-pull-request:
+          org-list:
+            - rcbops
+          github-hooks: true
+          trigger-phrase: '.*recheck_all.*|.*recheck_{type}.*'
+          white-list-target-branches:
+            - master
+          auth-id: "8b635975-7d59-45f8-b7ee-8bceb2e44ba3"
+          status-context: "{type}"
+    builders:
+      - trigger-builds:
+        - project: "RPC-AIO"
+          block: true
+          current-parameters: False
+          predefined-parameters: |
+            JENKINS_RPC_BRANCH=${{sha1}}
+            UPGRADE={upgrade}
+            sha1=liberty-12.2
+            ghprbTargetBranch=liberty-12.2
+
+# Update Jenkins Jobs.
+# This job runs after changes are merged to jenkins-rpc.
+# Jobs defined in this file will be updated to match
+# the configuration defined here.
+- job:
+    name: JJB-Job-Update
+    display-name: JJB-Job-Update
+    project-type: freestyle
+    description: 'Managed by JJB: Update JJB Jobs'
+    defaults: global
+    disabled: false
+    concurrent: false
+    node: master
+    logrotate:
+      daysToKeep: 30
+    properties:
+      - jenkins-rpc-github
+    scm:
+      - jenkins-rpc-git
+    triggers:
+      - github # triggered post merge, not on PR
+    builders:
+      - shell: scripts/run_jjb.sh
