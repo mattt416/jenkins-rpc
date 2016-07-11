@@ -52,6 +52,14 @@ override_oa(){
   fi
 }
 
+integrate_proposed_change(){
+  ( git rebase origin/${ghprbTargetBranch}; echo "Rebased ${sha1} on ${ghprbTargetBranch}" ) || \
+  ( git merge origin/${ghprbTargetBranch}; echo "Merged ${ghprbTargetBranch} into ${sha1}" ) || {
+      echo "Failed to rebase or merge ${sha1} and ${ghprbTargetBranch}, quitting"
+      exit 1
+    }
+}
+
 #fix sudoers because jenkins jcloud plugin stamps on it.
 sudo tee -a /etc/sudoers <<ESUDOERS
 %admin ALL=(ALL) ALL
@@ -83,11 +91,7 @@ if [ "$UPGRADE" == "yes" ]
       exit 1
     }
 else
-    echo "Rebasing ${sha1} on ${ghprbTargetBranch}"
-    git rebase origin/${ghprbTargetBranch} || {
-      echo "Rebase failed, quitting"
-      exit 1
-    }
+  integrate_proposed_change
 fi
 
 git submodule sync
@@ -162,11 +166,7 @@ if [ "$UPGRADE" == "yes" ] && [ "$OVERALL_RESULT" -eq 0 ];
     git stash
     git checkout ${sha1}
     if [[ ! -z "${ghprbTargetBranch}" ]]; then
-      echo "Rebasing ${sha1} on ${ghprbTargetBranch}"
-      git rebase origin/${ghprbTargetBranch} || {
-        echo "Rebase failed, quitting"
-        exit 1
-      }
+      integrate_proposed_change
     fi
     git submodule sync
     git submodule update --init
