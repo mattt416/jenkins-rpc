@@ -126,6 +126,20 @@ rackspace_cloud_api_key: ${rackspace_cloud_api_key}
 EOVARS
 set -x
 
+# If horizon extensions are in tree and the appropriate PR trigger vars are
+# set, override the horizon extensions git location so that the proposed
+# changes are built.
+# NOTE(hughsaunders): Any proposed changes to the horizon extensions won't be
+# rebased or merged into master before being built. So if the proposed commit's
+# parent is old, this test won't guarantee that it works with the current
+# master.
+if [[ -e horizon-extensions && -n "${ghprbAuthorRepoGitUrl}" && -n "${ghprbActualCommit}" ]]; then
+  tee -a $uev &>/dev/null <<EOVARS
+horizon_extensions_git_repo: ${ghprbAuthorRepoGitUrl}
+horizon_extensions_git_install_branch: ${ghprbActualCommit}
+EOVARS
+fi
+
 #Supply fixed cirros image while empty key bug is not fixed upstream.
 tee -a $uev &>/dev/null <<EOVARS
 cirros_img_url: "http://rpc-repo.rackspace.com/rpcgating/cirros-0.3.4-x86_64-dropbearmod.img"
