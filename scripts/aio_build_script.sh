@@ -1,4 +1,7 @@
-#!/bin/bash -x
+#!/bin/bash
+set -x # verbose
+set -u # fail on ref before assignment
+set -e # terminate script after any non zero exit
 
 # Useful for getting real time feedback from ansible playbook runs
 export PYTHONUNBUFFERED=1
@@ -10,7 +13,10 @@ log_git_status(){
 }
 
 run_rpc_deploy(){
+  script=${1:-deploy.sh}
+  echo "********************** Run RPC $script ***********************"
   sudo -E\
+    TERM=linux \
     DEPLOY_AIO=yes \
     DEPLOY_HAPROXY=yes \
     DEPLOY_TEMPEST=yes \
@@ -21,25 +27,21 @@ run_rpc_deploy(){
     ANSIBLE_GIT_REPO="https://github.com/hughsaunders/ansible" \
     ADD_NEUTRON_AGENT_CHECKSUM_RULE=yes \
     BOOTSTRAP_OPTS=$BOOTSTRAP_OPTS \
-    scripts/deploy.sh
-}
-
-calc_result(){
-  [ $DEPLOY_RC == 0 -a $TEMPEST_RC == 0 -a $HOLLAND_RC == 0 ]
-  OVERALL_RESULT=$?
-  echo "Deploy Result: $DEPLOY_RC"
-  echo "Tempest Result: $TEMPEST_RC"
-  echo "Holland Result: $HOLLAND_RC"
-  echo "Overall Result: $OVERALL_RESULT"
+    scripts/$script
+  echo "********************** RPC $script Completed Succesfully ***********************"
 }
 
 run_tempest(){
   # jenkins user does not have the necessary permissions to run lxc commands
   # serial needed to ensure all tests
+  echo "********************** Run Tempest ***********************"
   sudo -E lxc-attach -n $(sudo -E lxc-ls |grep utility) -- /bin/bash -c "RUN_TEMPEST_OPTS='--serial' /opt/openstack_tempest_gate.sh ${TEMPEST_TESTS}"
+  echo "********************** Tempest Completed Succesfully ***********************"
 }
 run_holland(){
+  echo "********************** Run Holland  ***********************"
   sudo lxc-attach -n $(sudo lxc-ls |grep galera|head -n1) -- /bin/bash -c "holland bk"
+  echo "********************** Holland Completed Succesfully ***********************"
 }
 
 override_oa(){
@@ -98,13 +100,11 @@ git submodule sync
 git submodule update --init
 
 override_oa
-
 log_git_status
 
 # git plugin checks out repo to root of workspace
 # but deploy script expects checkout in /opt/rpc-openstack
 sudo ln -s $PWD /opt/rpc-openstack
-
 
 ## Add MAAS credentials
 uev=/opt/rpc-openstack/rpcd/etc/openstack_deploy/user_zzz_gating_variables.yml
@@ -140,29 +140,17 @@ tempest_tempest_conf_overrides:
 EOVARS
 
 # Set ubuntu repo to supplied value. Effects Host bootstrap, and container default repo.
-export BOOTSTRAP_OPTS="${BOOTSTRAP_OPTS} bootstrap_host_ubuntu_repo=${UBUNTU_REPO}"
+export BOOTSTRAP_OPTS="${BOOTSTRAP_OPTS:-} bootstrap_host_ubuntu_repo=${UBUNTU_REPO}"
 export BOOTSTRAP_OPTS="${BOOTSTRAP_OPTS} bootstrap_host_ubuntu_security_repo=${UBUNTU_REPO}"
 
 # Add any additional vars specified in jenkins job params
 echo "$USER_VARS" | tee -a $uev
 
-echo "********************** Run RPC Deploy Script ***********************"
 run_rpc_deploy
-DEPLOY_RC=$?
-
-echo "********************** Run Tempest ***********************"
 run_tempest
-TEMPEST_RC=$?
-
-echo "********************** Run Holland ***********************"
 run_holland
-HOLLAND_RC=$?
 
-echo "********************** Deployment Result **********************"
-calc_result
-
-if [ "$UPGRADE" == "yes" ] && [ "$OVERALL_RESULT" -eq 0 ];
-  then
+if [ "$UPGRADE" == "yes" ]; then
     git stash
     git checkout ${sha1}
     if [[ ! -z "${ghprbTargetBranch}" ]]; then
@@ -172,36 +160,16 @@ if [ "$UPGRADE" == "yes" ] && [ "$OVERALL_RESULT" -eq 0 ];
     git submodule update --init
     override_oa
     log_git_status
-    echo "********************** Run RPC Deploy/Upgrade Script ***********************"
     if [[ "$UPGRADE_TYPE" == "major" ]]; then
-      sudo -E \
-        TERM=linux \
-        DEPLOY_AIO=no \
-        DEPLOY_HAPROXY=yes \
-        DEPLOY_TEMPEST=yes \
-        DEPLOY_CEPH=${DEPLOY_CEPH} \
-        DEPLOY_SWIFT=${DEPLOY_SWIFT} \
-        DEPLOY_MAAS=${DEPLOY_MAAS} \
-        ANSIBLE_GIT_RELEASE=ssh_retry \
-        ANSIBLE_GIT_REPO="https://github.com/hughsaunders/ansible" \
-        ADD_NEUTRON_AGENT_CHECKSUM_RULE=yes \
-        BOOTSTRAP_OPTS=$BOOTSTRAP_OPTS \
-        scripts/upgrade.sh
+      run_rpc_deploy upgrade.sh
     else
       run_rpc_deploy
     fi
-    DEPLOY_RC=$?
-
-    echo "********************** Run Tempest ***********************"
     run_tempest
-    TEMPEST_RC=$?
-
-    echo "********************** Run Holland ***********************"
     run_holland
-    HOLLAND_RC=$?
-
-    echo "********************** Post-upgrade results **********************"
-    calc_result
-
 fi
-exit $OVERALL_RESULT
+
+echo
+echo "********************** Complete ***********************"
+echo "Finished Successfully"
+echo
