@@ -154,7 +154,7 @@ run_holland
 if [ "$UPGRADE" == "yes" ]; then
     git stash
     git checkout ${sha1}
-    if [[ ! -z "${ghprbTargetBranch}" ]]; then
+    if [[ ! -z "${ghprbTargetBranch:-}" ]]; then
       integrate_proposed_change
     fi
     git submodule sync
