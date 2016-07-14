@@ -2,6 +2,7 @@
 set -x # verbose
 set -u # fail on ref before assignment
 set -e # terminate script after any non zero exit
+set -o pipefail # fail even if later tasks in a pipeline would succeed
 
 # Useful for getting real time feedback from ansible playbook runs
 export PYTHONUNBUFFERED=1
@@ -55,8 +56,8 @@ override_oa(){
 }
 
 integrate_proposed_change(){
-  ( git rebase origin/${ghprbTargetBranch}; echo "Rebased ${sha1} on ${ghprbTargetBranch}" ) || \
-  ( git merge origin/${ghprbTargetBranch}; echo "Merged ${ghprbTargetBranch} into ${sha1}" ) || {
+  ( git rebase origin/${ghprbTargetBranch} && echo "Rebased ${sha1} on ${ghprbTargetBranch}" ) || \
+  ( git merge origin/${ghprbTargetBranch} && echo "Merged ${ghprbTargetBranch} into ${sha1}" ) || {
       echo "Failed to rebase or merge ${sha1} and ${ghprbTargetBranch}, quitting"
       exit 1
     }
@@ -144,7 +145,7 @@ export BOOTSTRAP_OPTS="${BOOTSTRAP_OPTS:-} bootstrap_host_ubuntu_repo=${UBUNTU_R
 export BOOTSTRAP_OPTS="${BOOTSTRAP_OPTS} bootstrap_host_ubuntu_security_repo=${UBUNTU_REPO}"
 
 # Add any additional vars specified in jenkins job params
-echo "$USER_VARS" | tee -a $uev
+echo "${USER_VARS:-}" | tee -a $uev
 
 run_rpc_deploy
 run_tempest
