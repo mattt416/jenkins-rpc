@@ -35,4 +35,4 @@ ENV JENKINS_HOME /opt/jenkins
 VOLUME /opt/jenkins
 
 # Fire up jenkins
-CMD java -jar /opt/jenkins/jenkins.war
+CMD java -Dhudson.model.ParametersAction.keepUndefinedParameters=true -jar opt/jenkins/jenkins.war
