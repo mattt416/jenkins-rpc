@@ -57,7 +57,9 @@ override_oa(){
 
 integrate_proposed_change(){
   ( git rebase origin/${ghprbTargetBranch} && echo "Rebased ${sha1} on ${ghprbTargetBranch}" ) || \
-  ( git merge origin/${ghprbTargetBranch} && echo "Merged ${ghprbTargetBranch} into ${sha1}" ) || {
+  ( git rebase --abort
+    git merge origin/${ghprbTargetBranch} \
+    && echo "Merged ${ghprbTargetBranch} into ${sha1}" ) || {
       echo "Failed to rebase or merge ${sha1} and ${ghprbTargetBranch}, quitting"
       exit 1
     }
