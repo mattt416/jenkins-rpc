@@ -36,3 +36,46 @@ while read stack_ref; do
                 done
     fi
 done <stack_refs
+
+# Delete all networks that are not associated with an active stack.
+
+# I failed to get rackspace-novaclient to interface with rackspace networks.
+# Shade won't either, so I resorted to using pyrax. However pyrax doesn't
+# support orchestation, so I'm using shade for that.
+python <<EOP
+import os
+import os_client_config
+import pyrax
+import shade
+
+# Note that clouds.yaml and mattt_jenkins_dfw.pyrax contain the same creds
+# but in different formats, and must be updated in unison.
+
+# configure shade with creds from clouds.yaml
+cloud_config = os_client_config.OpenStackConfig(
+  config_files=['/opt/jenkins/creds/clouds.yaml']
+).get_one_cloud('raxus', region_name='DFW')
+osc = shade.OpenStackCloud(cloud_config=cloud_config)
+
+# configure pyrax with creds from mattt_jenkins_dfw.pyrax
+pyrax.set_setting('identity_type', 'rackspace')
+pyrax.set_credential_file('/opt/jenkins/creds/mattt_jenkins_dfw.pyrax')
+cnet = pyrax.connect_to_cloud_networks(region='DFW')
+
+# get heat generated networks
+networks = [x for x in cnet.list() if x.label.endswith('-rpc-network')]
+
+# get stacks that are active (creating, created)
+stacks = [x for x in osc.search_stacks()
+          if x.stack_status in ['CREATE_COMPLETE', 'CREATE_IN_PROGRESS']]
+
+# delete heat generated networks that don't belong to an active stack
+for network in networks:
+  stack_id_prefix = network.label.split('-')[0]
+  for stack in stacks:
+    if stack_id_prefix == stack.id.split('-')[0]:
+      break
+  else:
+    print "Deleting network: {network}".format(network=network.label)
+    cnet.delete(network)
+EOP
