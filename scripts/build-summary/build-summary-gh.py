@@ -96,12 +96,13 @@ def print_html(buildobjs):
         fdict['histogram'] = [0] * histogram_length
         for build in fdict['builds']:
             age_days = (now - build.timestamp).days
-            if age_days <= histogram_length:
+            if age_days < histogram_length:
                 fdict['histogram'][histogram_length - age_days - 1] += 1
 
     if 'Unknown Failure' in failcount:
         del failcount['Unknown Failure']
 
+    # data for periodic build success
     buildcount = collections.defaultdict(TSF)
     twodaysago = datetime.datetime.now() - datetime.timedelta(days=2)
     for build in [b for b in buildobjs if b.timestamp > twodaysago]:
@@ -113,6 +114,37 @@ def print_html(buildobjs):
                    b=build.branch,
                    s=build.btype,
                    t=build.trigger)].b(build)
+    periodichistogram = {}
+    for build in buildobjs:
+        # count aborts as failure for the sake of graphs
+        result = build.result
+        if result == 'ABORTED':
+            result = 'FAILURE'
+        if build.trigger != 'periodic':
+            continue
+        key_base = '{branch}_{btype}_{trigger}'.format(
+            branch=build.branch,
+            btype=build.btype,
+            trigger=build.trigger)
+        key = '{base}_{result}'.format(
+            base=key_base,
+            result=result)
+        stats_key = '{base}_stats'.format(base=key_base)
+        if key not in periodichistogram:
+            periodichistogram[key] = [0] * histogram_length
+            periodichistogram[stats_key] = dict(max=0)
+        age_days = (now - build.timestamp).days
+        if age_days < histogram_length:
+            if result == "SUCCESS":
+                inc = 1
+            else:
+                inc = -1
+            periodichistogram[key][histogram_length - age_days - 1] += inc
+            value = abs(
+                periodichistogram[key][histogram_length - age_days - 1])
+            stats = periodichistogram[stats_key]
+            if value > stats['max']:
+                stats['max'] = value
 
     def dt_filter(date):
         """Date time filter
@@ -131,7 +163,8 @@ def print_html(buildobjs):
         buildcount=buildcount,
         buildobjs=buildobjs,
         timestamp=datetime.datetime.now(),
-        failcount=failcount))
+        failcount=failcount,
+        periodichistogram=periodichistogram))
 
 
 @click.command(help='args are paths to jenkins build.xml files')

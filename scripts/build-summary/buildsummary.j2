@@ -16,6 +16,9 @@ div.result-table {
   margin: auto;
   width: 95%;
 }
+div.spark_group {
+  width: 126px;
+}
 </style>
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -55,6 +58,23 @@ function draw_spark(){
         height: '25px'
     });
 }
+
+function bar_spark(selector, colour){
+    $(selector).each(function(){
+      $(this).sparkline('html', {
+          type: 'bar',
+          barColor: colour,
+          width: '125px',
+          height: '30px',
+          chartRangeMax: $(this).data('max'),
+          chartRangeMin: $(this).data('min'),
+      });
+    })
+}
+function draw_spark_bar(){
+  bar_spark('.spark_shist', 'green');
+  bar_spark('.spark_fhist', 'red');
+}
 $(document).ready( function () {
 
     // Summary (percent fail) table
@@ -62,7 +82,8 @@ $(document).ready( function () {
       "ordering": false,
       "paging": false,
       "searching": false,
-      "info": false
+      "info": false,
+      "drawCallback": draw_spark_bar
       });
 
     // Most recent failures
@@ -113,14 +134,21 @@ $(document).ready( function () {
 
   {% macro mcell(idstring) %}
     {% set p = buildcount[idstring].s_percent %}
-    {% set t = buildcount[idstring].t %}
-    <td class="{% if p > 95 %}success{% elif p < 25 %}danger{% elif p < 50 %}warning{% endif %}">
-      {{ '{0:0.2f}'.format(p) }}% of {{ t }}
+    {% set s_hist = periodichistogram[idstring+'_SUCCESS'] %}
+    {% set f_hist = periodichistogram[idstring+'_FAILURE'] %}
+    {% set max = periodichistogram[idstring+'_stats']['max'] %}
+    <td class="{% if p > 95 %}success{% elif p < 60 %}danger{% elif p <= 95 %}warning{% endif %}">
+      <div class="spark_group">
+        <span class="spark_shist" values="{{s_hist|join(',')}}" data-min="0" data-max="{{max}}"></span>
+        <span class="spark_fhist" values="{{f_hist|join(',')}}" data-min="{{max|abs * -1 }}" data-max="0"></span>
+      </div>
     </td>
   {% endmacro %}
 
   <div class="result-table" id="periodic">
-  <h3> Periodic Build Success (Last 48 Hours)</h3>
+  <h3> Periodic Build Success</h3>
+  <p> Note: 30 days, one column per day, green/positive are successfull jobs
+  red/negative are failed (or aborted) jobs. Most recent on the right.</p>
   <table id="summary" class="table">
     <thead>
       <tr><th></th><th>Master</th><th>Liberty</th><th>Kilo</th></tr>
