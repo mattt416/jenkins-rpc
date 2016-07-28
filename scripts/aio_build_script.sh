@@ -141,6 +141,7 @@ if [[ -e horizon-extensions && -n "${ghprbAuthorRepoGitUrl}" && -n "${ghprbActua
 horizon_extensions_git_repo: ${ghprbAuthorRepoGitUrl}
 horizon_extensions_git_install_branch: ${ghprbActualCommit}
 horizon_extensions_git_install_fragments: "subdirectory=horizon-extensions/"
+horizon_extensions_git_package_name: "horizon-extensions"
 EOVARS
 fi
 
