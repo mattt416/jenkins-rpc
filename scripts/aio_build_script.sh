@@ -41,7 +41,14 @@ run_tempest(){
 }
 run_holland(){
   echo "********************** Run Holland  ***********************"
-  sudo lxc-attach -n $(sudo lxc-ls |grep galera|head -n1) -- /bin/bash -c "holland bk"
+  # Move test_holland.yml playbook to rpc-openstack repo
+  cp buildscript_repo/scripts/test_holland.yml /opt/rpc-openstack/rpcd/playbooks
+  # Run the playbook
+  pushd /opt/rpc-openstack/rpcd/playbooks
+    sudo -E openstack-ansible test_holland.yml
+  popd
+  # Remove the playbook
+  rm /opt/rpc-openstack/rpcd/playbooks/test_holland.yml
   echo "********************** Holland Completed Succesfully ***********************"
 }
 
