@@ -1,0 +1,24 @@
+---
+
+- hosts: galera
+  user: root
+  vars:
+    holland_venv_bin: "/openstack/venvs/holland-{{ rpc_release }}/bin"
+  tasks:
+    - name: Discover rpc-openstack version
+      git_repo_info:
+        path: "/opt/rpc-openstack"
+      delegate_to: localhost
+      run_once: true
+      tags:
+        - rpc-release
+    
+    - name: Test for holland venv
+      stat: 
+        path: "{{ holland_venv_bin }}"
+      register: holland_venv
+
+    - name: Test the functionality of the holland bk command
+      register: command_result
+      failed_when: "command_result.rc > 0"
+      command: "{{ holland_venv.stat.exists | bool | ternary(holland_venv_bin + '/python2.7', '') }} {{ holland_venv.stat.exists | bool | ternary(holland_venv_bin + '/', '') }}holland bk"
