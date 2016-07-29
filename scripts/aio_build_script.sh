@@ -143,7 +143,9 @@ set -x
 # rebased or merged into master before being built. So if the proposed commit's
 # parent is old, this test won't guarantee that it works with the current
 # master.
-if [[ -e horizon-extensions && -n "${ghprbAuthorRepoGitUrl}" && -n "${ghprbActualCommit}" ]]; then
+if [[ -n "${ghprbAuthorRepoGitUrl:-}" && -n "${ghprbActualCommit:-}" ]]\
+      && git ls-tree ${ghprbActualCommit} --name-only \
+           | grep -q horizon-extensions; then
   tee -a $uev &>/dev/null <<EOVARS
 horizon_extensions_git_repo: ${ghprbAuthorRepoGitUrl}
 horizon_extensions_git_install_branch: ${ghprbActualCommit}
