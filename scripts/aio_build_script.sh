@@ -126,7 +126,7 @@ sudo sed -i '/rackspace_cloud_\(auth_url\|tenant_id\|username\|password\|api_key
 echo "Adding MAAS creds to user_extras_variables"
 #set +x to avoid leaking creds to the log.
 set +x
-tee -a $uev &>/dev/null <<EOVARS
+tee -a $uev >/dev/null <<EOVARS
 ---
 rackspace_cloud_auth_url: ${rackspace_cloud_auth_url}
 rackspace_cloud_tenant_id: ${rackspace_cloud_tenant_id}
@@ -146,7 +146,7 @@ set -x
 if [[ -n "${ghprbAuthorRepoGitUrl:-}" && -n "${ghprbActualCommit:-}" ]]\
       && git ls-tree ${ghprbActualCommit} --name-only \
            | grep -q horizon-extensions; then
-  tee -a $uev &>/dev/null <<EOVARS
+  tee -a $uev >/dev/null <<EOVARS
 horizon_extensions_git_repo: ${ghprbAuthorRepoGitUrl}
 horizon_extensions_git_install_branch: ${ghprbActualCommit}
 horizon_extensions_git_install_fragments: "subdirectory=horizon-extensions/"
@@ -155,7 +155,7 @@ EOVARS
 fi
 
 #Supply fixed cirros image while empty key bug is not fixed upstream.
-tee -a $uev &>/dev/null <<EOVARS
+tee -a $uev >/dev/null <<EOVARS
 cirros_img_url: "http://rpc-repo.rackspace.com/rpcgating/cirros-0.3.4-x86_64-dropbearmod.img"
 tempest_images:
   - url: "{{cirros_img_url}}"
