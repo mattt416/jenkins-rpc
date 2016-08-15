@@ -21,13 +21,9 @@ run_rpc_deploy(){
     DEPLOY_AIO=yes \
     DEPLOY_HAPROXY=yes \
     DEPLOY_TEMPEST=yes \
-    DEPLOY_CEPH=${DEPLOY_CEPH} \
-    DEPLOY_SWIFT=${DEPLOY_SWIFT} \
-    DEPLOY_MAAS=${DEPLOY_MAAS} \
     ANSIBLE_GIT_RELEASE=ssh_retry \
     ANSIBLE_GIT_REPO="https://github.com/hughsaunders/ansible" \
     ADD_NEUTRON_AGENT_CHECKSUM_RULE=yes \
-    BOOTSTRAP_OPTS=$BOOTSTRAP_OPTS \
     scripts/$script
   echo "********************** RPC $script Completed Succesfully ***********************"
 }
