@@ -72,6 +72,17 @@ integrate_proposed_change(){
     }
 }
 
+# Check that this node is clean before running a build.
+check_for_existing_config(){
+  if [[ -e /opt/rpc-openstack ]]; then
+    echo "/opt/rpc-openstack already exists. AIO Gate jobs must be run on clean nodes, quitting."
+    exit 1
+  fi
+}
+
+
+check_for_existing_config
+
 #fix sudoers because jenkins jcloud plugin stamps on it.
 sudo tee -a /etc/sudoers <<ESUDOERS
 %admin ALL=(ALL) ALL
