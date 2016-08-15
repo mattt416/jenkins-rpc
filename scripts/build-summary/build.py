@@ -145,6 +145,7 @@ class Build(object):
             self.compile_fail(lines)
             self.apt_fail(lines)
             self.holland_fail(lines)
+            self.slave_died(lines)
 
             # Heat related failures
             self.create_fail(lines)
@@ -516,6 +517,18 @@ class Build(object):
             self.failures.add("Cirros upload fail: " + match_str.strip())
         except ValueError:
             return
+
+    def slave_died(self, lines):
+        match_re = ('Agent went offline during the build')
+        pattern = re.compile(match_re)
+        for i, line in enumerate(lines):
+            if pattern.search(line):
+                previous_task = self.get_previous_task(i, lines)
+                self.add_failure(
+                    'Slave Died / Agent went offline during the build: '
+                    '{previous_task}'.format(
+                        previous_task=previous_task))
+                break
 
     def __str__(self):
         s = ("{timestamp} {result} {job_name}/{build_num} --> "
