@@ -186,9 +186,13 @@ def summary(builds, newerthan, cache):
              'builds/(?P<build_num>[0-9]+))/'), build)
         if path_groups_match:
             path_groups = path_groups_match.groupdict()
-            if path_groups['build_num'] in buildobjs:
+            key = "{job_name}_{build_num}".format(
+                job_name=path_groups['job_name'],
+                build_num=path_groups['build_num']
+            )
+            if key in buildobjs:
                 continue
-            buildobjs[path_groups['build_num']] = Build(
+            buildobjs[key] = Build(
                 build_folder=path_groups['build_folder'],
                 job_name=path_groups['job_name'],
                 build_num=path_groups['build_num'])
@@ -200,9 +204,9 @@ def summary(builds, newerthan, cache):
     age_limit = (datetime.datetime.now()
                  - datetime.timedelta(days=RETENTION_DAYS))
     cache_dict = {}
-    for num, build in buildobjs.items():
+    for key, build in buildobjs.items():
         if build.timestamp > age_limit:
-            cache_dict[num] = build
+            cache_dict[key] = build
     with open(cache, 'wb') as f:
         pickle.dump(cache_dict, f, pickle.HIGHEST_PROTOCOL)
 
