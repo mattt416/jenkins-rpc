@@ -21,7 +21,7 @@ RUN apt-get update
 
 # Upgrade and install things
 RUN apt-get upgrade -y
-RUN apt-get install -y jenkins git ssh-client docker-engine build-essential libffi-dev python-dev libxslt1-dev libxml2 libxml2-dev
+RUN apt-get install -y jenkins git ssh-client docker-engine build-essential libffi-dev python-dev libxslt1-dev libxml2 libxml2-dev libssl-dev
 
 # install pip
 RUN curl https://bootstrap.pypa.io/get-pip.py > get-pip.py
@@ -35,4 +35,7 @@ ENV JENKINS_HOME /opt/jenkins
 VOLUME /opt/jenkins
 
 # Fire up jenkins
-CMD java -Dhudson.model.ParametersAction.keepUndefinedParameters=true -jar opt/jenkins/jenkins.war
+CMD java \
+  -Dhudson.model.ParametersAction.keepUndefinedParameters=true \
+  -Dhudson.remoting.Launcher.pingTimeoutSec=1800 \
+  -jar opt/jenkins/jenkins.war
