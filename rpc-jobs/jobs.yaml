@@ -106,7 +106,7 @@
     UPGRADE_FROM_REF: "origin/kilo"
     UPGRADE_FROM_NEAREST_TAG: "yes"
     UPGRADE_TYPE: "major"
-    UBUNTU_REPO: "https://mirror.rackspace.com/ubuntu"
+    UBUNTU_REPO: "auto"
     DEPLOY_MAAS: "yes"
     JENKINS_RPC_REPO: "https://github.com/rcbops/jenkins-rpc"
     JENKINS_RPC_BRANCH: "master"
