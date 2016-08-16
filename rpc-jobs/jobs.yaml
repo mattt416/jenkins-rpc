@@ -69,6 +69,7 @@
           predefined-parameters: |
             JENKINS_RPC_BRANCH=${{sha1}}
             UPGRADE={upgrade}
+            UPGRADE_TYPE=major
             sha1=liberty-12.2
             ghprbTargetBranch=liberty-12.2
 
