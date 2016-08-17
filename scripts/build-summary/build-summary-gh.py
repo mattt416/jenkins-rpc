@@ -7,6 +7,8 @@ import datetime
 import os
 import pickle
 import re
+import sys
+import traceback
 
 # 3rd Party imports
 import click
@@ -174,11 +176,16 @@ def print_html(buildobjs):
 @click.option('--cache', default='/opt/jenkins/www/.cache')
 def summary(builds, newerthan, cache):
 
+    buildobjs = {}
     if os.path.exists(cache):
-        with open(cache, 'rb') as f:
-            buildobjs = pickle.load(f)
-    else:
-        buildobjs = {}
+        try:
+            with open(cache, 'rb') as f:
+                buildobjs = pickle.load(f)
+        except Exception as e:
+            buildobjs = {}
+            sys.stderr.write(
+                "Failed to read cache file: {cache}".format(cache=cache))
+            traceback.print_exc(file=sys.stderr)
 
     for build in builds:
         path_groups_match = re.search(
@@ -192,10 +199,15 @@ def summary(builds, newerthan, cache):
             )
             if key in buildobjs:
                 continue
-            buildobjs[key] = Build(
-                build_folder=path_groups['build_folder'],
-                job_name=path_groups['job_name'],
-                build_num=path_groups['build_num'])
+            try:
+                buildobjs[key] = Build(
+                    build_folder=path_groups['build_folder'],
+                    job_name=path_groups['job_name'],
+                    build_num=path_groups['build_num'])
+                sys.stderr.write("OK: {key}\n".format(key=key))
+            except Exception as e:
+                sys.stderr.write("FAIL: {key} {e}\n".format(key=key, e=e))
+                traceback.print_exc(file=sys.stderr)
 
     print_html(buildobjs)
 
