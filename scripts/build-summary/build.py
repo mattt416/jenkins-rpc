@@ -1,11 +1,16 @@
 # Stdlib import
 import datetime
 import re
+import sys
 
 # 3rd Party imports
 # Imports with C deps
 # remember to install all the apt xml stuff - not just the pip packages.
 from lxml import etree
+
+
+class FilterException(Exception):
+    pass
 
 
 class Build(object):
@@ -15,8 +20,17 @@ class Build(object):
     the build.xml, injected_vars and log files.
     """
     def __init__(self, build_folder, job_name, build_num):
+        self.build_start = datetime.datetime.now()
+        self.stdlib_path_re = re.compile(
+            "/usr/lib/python[0-9]*.[0-9]*/[^ /]*\.pyc?")
         self.uuid_re = re.compile("([0-9a-zA-Z]+-){4}[0-9a-zA-Z]+")
         self.ip_re = re.compile("([0-9]+\.){3}[0-9]+")
+        self.colour_code_re = re.compile('(\[8mha:.*)?\[0m')
+        self.maas_tx_id_re = re.compile('\S*k1k.me\S*')
+        self.maas_entity_uri_re = re.compile(
+            '/\d+/entities(/[^/]*)?|/\d+/agent_tokens')
+        self.maas_httpd_tx_id_re = re.compile("'httpdTxnId': '[^']*'")
+        self.ansible_tmp_re = re.compile('ansible-tmp-[^/]*')
         self.tree = etree.parse('{bf}/build.xml'.format(
             bf=build_folder,
             job_name=job_name,
@@ -54,10 +68,20 @@ class Build(object):
         multiple failures
         """
 
-        failure_string = self.uuid_re.sub('** uuid removed **',
-                                          failure_string)
-        failure_string = self.ip_re.sub('** ip removed **',
-                                        failure_string)
+        normalisers = [
+            (self.uuid_re, '**UUID**'),
+            (self.ip_re, '**IPv4**'),
+            (self.colour_code_re, ''),
+            (self.maas_tx_id_re, '**TX_ID**'),
+            (self.maas_entity_uri_re, '**Entity**'),
+            (self.maas_httpd_tx_id_re,
+                '**HTTP_TX_ID**'),
+            (self.ansible_tmp_re, 'ansible-tmp-**Removed**')
+        ]
+
+        for pattern, sub in normalisers:
+            failure_string = pattern.sub(sub, failure_string)
+
         return failure_string
 
     def add_failure(self, failure):
@@ -140,47 +164,55 @@ class Build(object):
         lines += open_log('archive/artifacts/runcmd-bash.log')
         lines += open_log('archive/artifacts/deploy.sh.log')
 
-        if self.result in ['ABORTED', 'FAILURE']:
+        filters = [
             # Generic Failures
-            self.timeout(lines)
-            self.ssh_fail(lines)
-            self.too_many_retries(lines)
-            self.ansible_task_fail(lines)
-            self.tempest_test_fail(lines)
-            self.tempest_exception(lines)
-            self.cannot_find_role(lines)
-            self.invalid_ansible_param(lines)
-            self.jenkins_exception(lines)
-            self.pip_cannot_find(lines)
+            self.timeout,
+            self.ssh_fail,
+            self.too_many_retries,
+            self.ansible_task_fail,
+            self.tempest_test_fail,
+            self.traceback,
+            self.cannot_find_role,
+            self.invalid_ansible_param,
+            self.jenkins_exception,
+            self.pip_cannot_find,
 
             # Specific Failures
-            self.service_unavailable(lines)
-            self.rebase_fail(lines)
-            self.rsync_fail(lines)
-            self.elasticsearch_plugin_install(lines)
-            self.tempest_filter_fail(lines)
-            self.tempest_testlist_fail(lines)
-            self.compile_fail(lines)
-            self.apt_fail(lines)
-            self.holland_fail(lines)
-            self.slave_died(lines)
+            self.service_unavailable,
+            self.rebase_fail,
+            self.rsync_fail,
+            self.elasticsearch_plugin_install,
+            self.tempest_filter_fail,
+            self.tempest_testlist_fail,
+            self.compile_fail,
+            self.apt_fail,
+            self.holland_fail,
+            self.slave_died,
 
             # Heat related failures
-            self.create_fail(lines)
-            self.archive_fail(lines)
-            self.rate_limit(lines)
-
-            # Disabled Failures
-            # self.setup_tools_sql_alchemy(lines)
-            # self.ceilometer_user_not_found(lines)
-            # self.apt_mirror_fail(lines)
-            # self.dpkg_locked(lines)
-            # self.secgroup_in_use(lines)
-            # self.maas_alarm(lines)
-            # self.glance_504(lines)
-
-            # if not self.failures:
-            #    self.deploy_rc(lines)
+            self.create_fail,
+            self.archive_fail,
+            self.rate_limit
+        ]
+        timings = {}
+        if self.result in ['ABORTED', 'FAILURE']:
+            for lfilter in filters:
+                start_time = datetime.datetime.now()
+                lfilter(lines)
+                end_time = datetime.datetime.now()
+                delta = end_time - start_time
+                timings[lfilter] = delta
+        fail_end = datetime.datetime.now()
+        total_duration = fail_end - self.build_start
+        if total_duration > datetime.timedelta(seconds=5):
+            sys.stderr.write("Slow Job. {total_duration}\n".format(
+                total_duration=total_duration))
+            for lfilter, duration in timings.items():
+                if duration > datetime.timedelta(seconds=1):
+                    sys.stderr.write("    {lfilter}: {duration}\n".format(
+                        lfilter=lfilter.func_name,
+                        duration=duration
+                    ))
 
         if not self.failures:
             self.add_failure("Unknown Failure")
@@ -358,29 +390,62 @@ class Build(object):
                 self.add_failure('Tempest Test Failed: {test}'.format(
                     test=test))
 
-    def tempest_exception(self, lines):
-        exc_re = re.compile('tempest\.lib\.exceptions.*')
-        class_re = re.compile("<class '([^']*)'>")
-        details_re = re.compile("Details: (.*)$")
+    def traceback(self, lines):
+        start_re = re.compile(
+            r'^(?P<prefix>.*)Traceback \(most recent call last\)')
+        exc_re = re.compile(r'^\S')
+        MAX_TB_LINES = 100
+
+        def normalise(line, prefix):
+            # prefixes may contain re specials such as [
+            # which need to be escaped.
+            escaped_prefix = re.escape(prefix)
+            # prefixes may also contain timestamps that need to be generalised
+            timestamped_prefix = re.sub('\d+', '\d+', escaped_prefix)
+            return re.sub('^' + timestamped_prefix, '', line)
+
+        skip_count = 0
         for i, line in enumerate(lines):
-            exc_match = exc_re.search(line)
-            if exc_match:
-                exc = exc_match.group(0)
-                cls = ""
-                details = ""
-                for line in lines[i:i+5]:
-                    details_match = details_re.search(line)
-                    if details_match:
-                        details = details_match.group(1)
-                    class_match = class_re.search(line)
-                    if class_match:
-                        cls = class_match.group(1)
-                failure_string = (
-                    'Tempest Exception: tempest.lib.exceptions.'
-                    '{exc} {details} {cls}'.format(exc=exc,
-                                                   details=details,
-                                                   cls=cls))
-                self.add_failure(failure_string)
+            if skip_count > 0:
+                skip_count -= 1
+                continue
+            match = start_re.search(line)
+            if not match or self.failure_ignored(i, lines):
+                continue
+            groups = match.groupdict()
+            prefix = groups['prefix']
+            # This inner loop is for reading each frame of the stack trace
+            j = 0
+            while True:
+                j += 1
+                line = normalise(lines[i+j], prefix)
+                # Hard to find the last line of a Traceback
+                # it may not even contain a :
+                exc_match = exc_re.match(line)
+                if exc_match:
+                    exc_type, _, exc_msg = line.partition(': ')
+                    skip_count = j
+                    break
+                elif j > MAX_TB_LINES:
+                    raise FilterException("Failed to find end of trace"
+                                          " {job}_{build}:{l}"
+                                          .format(
+                                              job=self.job_name,
+                                              build=self.build_num,
+                                              l=i))
+                else:
+                    continue
+
+            prev = self.get_previous_task(i, lines)
+            failure_string = (
+                "Traceback. {exc_type}: {exc_msg} Previous Task {prev}"
+                .format(
+                    exc_type=exc_type.strip(),
+                    exc_msg=exc_msg.strip(),
+                    prev=prev
+                )
+            )
+            self.add_failure(failure_string)
 
     def elasticsearch_plugin_install(self, lines):
         match_str = 'failed to download out of all possible locations...'
@@ -459,6 +524,12 @@ class Build(object):
             if task_match and play_match:
                 task_groups = task_match.groupdict()
                 play_groups = play_match.groupdict()
+                # If we match the last task to be executed
+                # chances are the failure happened post-ansible,
+                # so the last task indicator isn't that useful.
+                if (task_groups['task'].strip()
+                        == 'Deploy RPC HAProxy configuration files'):
+                    return 'N/A'
                 if 'role' in task_groups and task_groups['role']:
                     return '{play} / {role} / {task}'.format(
                         role=task_groups['role'],
