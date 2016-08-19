@@ -12,10 +12,12 @@ set -u
 
 pushd rpc-jobs
 
+OPERATION=${1:-update}
+
 # Execute JJB
 jenkins-jobs \
   --conf jenkins_jobs.ini \
   --password $JENKINS_API_KEY \
-  update \
+  $OPERATION \
   jobs.yaml
 
