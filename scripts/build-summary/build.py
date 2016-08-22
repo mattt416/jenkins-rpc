@@ -188,6 +188,8 @@ class Build(object):
             self.apt_fail,
             self.holland_fail,
             self.slave_died,
+            self.cirros_dhcp,
+            self.cirros_sshd,
 
             # Heat related failures
             self.create_fail,
@@ -613,6 +615,22 @@ class Build(object):
                     'Slave Died / Agent went offline during the build: '
                     '{previous_task}'.format(
                         previous_task=previous_task))
+                break
+
+    def cirros_dhcp(self, lines):
+        match_re = ('No lease, failing')
+        pattern = re.compile(match_re)
+        for i, line in enumerate(lines):
+            if pattern.search(line):
+                self.add_failure('Cirros DHCP address acquisition fail')
+                break
+
+    def cirros_sshd(self, lines):
+        match_re = ('Starting dropbear sshd: FAIL')
+        pattern = re.compile(match_re)
+        for i, line in enumerate(lines):
+            if pattern.search(line):
+                self.add_failure('Cirros SSHd failed to start')
                 break
 
     def __str__(self):
