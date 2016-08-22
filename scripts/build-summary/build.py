@@ -205,11 +205,11 @@ class Build(object):
                                      fail=match.group(1)))
 
     def apt_fail(self, lines):
-        match_re = re.compile("W: Failed to fetch (.*) *Hash Sum mismatch")
+        match_re = re.compile(".: Failed to fetch (.*)")
         for line in lines:
             match = match_re.search(line)
             if match:
-                self.add_failure("Apt Hash Sum mismatch: {fail}".format(
+                self.add_failure("Apt Fetch Fail: {fail}".format(
                                  fail=match.group(1)))
                 break
 
