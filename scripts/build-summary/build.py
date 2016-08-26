@@ -101,35 +101,72 @@ class Build(object):
         jenkins_base = "http://jenkins.propter.net/"
         self.trigger = "periodic"
         self.build_hierachy = []
-        cause_elems = self.tree.xpath('//causes | //upstreamCauses')
-        for cause_elem in reversed(cause_elems):
+        cause_elem = self.tree.xpath(
+            '//causes | //causeBag/entry')[0].getchildren()[0]
+        def normalise_job_name(name):
+            # ensure that long names can be wrapped by inserting spaces
+            return re.sub('([/=,.])','\\1 ', name)
+        while True:
             cause_dict = {}
-            upstream_project = cause_elem.find('.//upstreamProject')
-            if upstream_project is not None:
-                cause_dict['name'] = upstream_project.text
+            tag = cause_elem.tag
+            if tag == 'hudson.model.Cause_-UpstreamCause':
+                cause_dict['name'] = normalise_job_name(
+                    cause_elem.find('./upstreamProject').text)
                 cause_dict['build_num'] = \
-                    cause_elem.find('.//upstreamBuild').text
+                    cause_elem.find('./upstreamBuild').text
                 cause_dict['url'] = (
                     "{jenkins}/{job}/{build}".format(
                         jenkins=jenkins_base,
-                        job=cause_elem.find('.//upstreamUrl').text,
+                        job=cause_elem.find('./upstreamUrl').text,
                         build=cause_dict['build_num']))
-                if cause_dict:
-                    self.build_hierachy.append(cause_dict)
-                    continue
-
-            pullID = cause_elem.find('.//pullID')
-            if pullID is not None:
+                self.build_hierachy.append(cause_dict)
+            elif tag == 'org.jenkinsci.plugins.ghprb.GhprbCause':
+                pullID = cause_elem.find('./pullID')
                 cause_dict['name'] = "PR: {title}".format(
-                    title=cause_elem.find('.//title').text)
+                    title=normalise_job_name(cause_elem.find('./title').text))
                 cause_dict['build_num'] = pullID.text
-                cause_dict['url'] = cause_elem.find('.//url').text
+                cause_dict['url'] = cause_elem.find('./url').text
                 self.trigger = "pr"
                 self.gh_pull = pullID.text
-                self.gh_target = cause_elem.find('.//targetBranch').text
+                self.gh_target = cause_elem.find('./targetBranch').text
                 self.gh_title = cause_dict['name']
-                if cause_dict:
-                    self.build_hierachy.append(cause_dict)
+                self.build_hierachy.append(cause_dict)
+            elif tag == 'hudson.triggers.TimerTrigger_-TimerTriggerCause':
+                self.build_hierachy.append({
+                    'name': 'TimerTrigger (Periodic)',
+                    'build_num': '',
+                    'url': '#'
+                })
+            elif tag == 'hudson.model.Cause_-UserIdCause':
+                user = cause_elem.find('./userId').text
+                self.trigger = "user"
+                self.build_hierachy.append({
+                    'name': 'Manual Trigger by {user}'.format(user=user),
+                    'build_num': '',
+                    'url': '{jenkins}user/{user}'.format(
+                        jenkins=jenkins_base,
+                        user=user),
+                })
+            else:
+                self.build_hierachy.append({
+                    'name': 'Unknown Trigger: {tag}'.format(
+                        tag=normalise_job_name(tag)),
+                    'build_num': '',
+                    'url': '#'
+                })
+
+            # Go round again if the current cause has upstream causes
+            upstream_causes = cause_elem.find('./upstreamCauses')
+            if upstream_causes is not None:
+                cause_elem = upstream_causes.getchildren()[0]
+                continue
+
+            # Otherwise found the root cause, exit loop.
+            break
+
+        # causes are collected from the AIO job working up to the root causes
+        # reverse the list to have the root cause as the first item.
+        self.build_hierachy.reverse()
 
         # Add currrent job to causes as its the last step in the hierachy
         self.build_hierachy.append(dict(
