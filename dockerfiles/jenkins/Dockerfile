@@ -21,7 +21,7 @@ RUN apt-get update
 
 # Upgrade and install things
 RUN apt-get upgrade -y
-RUN apt-get install -y jenkins git ssh-client docker-engine build-essential libffi-dev python-dev libxslt1-dev libxml2 libxml2-dev libssl-dev
+RUN apt-get install -y jenkins git ssh-client docker-engine build-essential libffi-dev python-dev libxslt1-dev libxml2 libxml2-dev libssl-dev gawk
 
 # install pip
 RUN curl https://bootstrap.pypa.io/get-pip.py > get-pip.py

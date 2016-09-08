@@ -31,17 +31,22 @@ function addpath(){
   to="$3"
   from_sha="$(getsha $from)"
   to_sha="$(getsha $to)"
-  test_paths=(${test_paths[@]} "${upg_type}_${from}_${to}_${from_sha}_${to_sha}")
+  generic="$4"
+  test_paths=(${test_paths[@]} "${upg_type}_${from}_${to}_${from_sha}_${to_sha}_${generic}")
+  >&2 echo "Added path: ${upg_type}_${from}_${to}_${from_sha}_${to_sha}_${generic}"
 }
 
 # remove paths that are not useful
-# currently this only removes paths whos start and end SHAs are the same,
-# but other filters may be added in future
 function filter_paths(){
   while read path; do
     fields=(${path//_/ })
     from_sha=${fields[3]}
     to_sha=${fields[4]}
+
+    # Reject any path that has a blank field
+    [[ "$path" =~ __ ]] && continue
+
+    # Reject paths where start and end point are the same
     if [[ $from_sha != $to_sha ]]; then
       echo $path
     fi
@@ -113,22 +118,22 @@ function find_paths(){
 
 
   if [[ $current_patch_version != '' ]]; then
-    addpath patch "$current_patch_version" "$current_branch"
+    addpath patch "$current_patch_version" "$current_branch" "latestpatch-test"
   fi
 
   # Assume cannot upgrade to 0 minor release
   if [[ $previous_major_version != '' ]] && [[ $branch_minor_number != 0 ]]; then
-    addpath major "$previous_major_version" "$current_branch"
+    addpath major "$previous_major_version" "$current_branch" "previousmajor-test"
   fi
   if [[ $previous_minor_version != '' ]]; then
-    addpath minor "$previous_minor_version" "$current_branch"
+    addpath minor "$previous_minor_version" "$current_branch" "previousminor-test"
   fi
 
   # Assume upgrading to first minor not possible
   if [[ $next_major_version != '' ]] && [[ $next_minor_version != '' ]] && [[ $(echo $next_major_version | egrep -o '\.[0-9]+\.' | cut -d. -f2) != 0 ]]; then
-    addpath major "$current_branch" "$next_major_version"
+    addpath major "$current_branch" "$next_major_version" "test-nextmajor"
   elif [[ $next_minor_version != '' ]]; then
-    addpath minor "$current_branch" "$next_minor_version"
+    addpath minor "$current_branch" "$next_minor_version" "test-nextminor"
   fi
 
   echo ${test_paths[@]}
