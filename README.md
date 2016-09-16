@@ -1,5 +1,5 @@
 # RPC-Openstack Gating
-<img src="fire-jenkins.png" width="300">
+<img src="docs/fire-jenkins.png" width="300">
 
 ## Linting
 Linting is checking the syntax and style of the code without executing it. RPC Lint jobs are run by [Travis CI](https://travis-ci.org/).
@@ -25,7 +25,7 @@ Note that some jobs have not yet been migrated to JJB and are defined in Jenkins
 ### Jenkins Jobs
 
 ###### JJB-RPC-AIO-*
-These jobs are all instances of the same JJB [Job Template](https://github.com/rcbops/jenkins-rpc/blob/master/rpc-jobs/jobs.yaml#L98). They are instantiated using a [project](http://docs.openstack.org/infra/jenkins-job-builder/definition.html#project), which is currently 2x4 matrix (swift,ceph)x(kilo,liberty,mitaka,master)  See [JJB-RPC-AIO_master-swift](http://jenkins.propter.net/job/JJB-RPC-AIO_master-swift/) as an example.
+These jobs are all instances of the same JJB [Job Template](https://github.com/rcbops/jenkins-rpc/blob/master/rpc-jobs/jobs.yaml#L98). They are instantiated using a [project](http://docs.openstack.org/infra/jenkins-job-builder/definition.html#project), which is currently a 2x4 matrix (swift,ceph)x(kilo,liberty,mitaka,master). See [JJB-RPC-AIO_master-swift](http://jenkins.propter.net/job/JJB-RPC-AIO_master-swift/) as an example.
 
 Each matrix combination provides its axis as variables but can also supply other variables to the job template. these values are used as string substitutions when JJB creates the compiled job configs. These variables are not available at job runtime. In order to pass a JJB template var into the environment of a running job, the env inject plugin is used. Defaults for these values are also supplied in the [first section of the job template](https://github.com/rcbops/jenkins-rpc/blob/master/rpc-jobs/jobs.yaml#L99).
 
@@ -74,7 +74,7 @@ The main block of this job is a shell task which does three things:
       1. Periodic Success: Shows how successful periodic jobs have been over the last 30 days (bar chart) and 48 hours (background colour). This is a good indication of current gate stability as periodic job stats are not pulled down by PR errors. Each column represents a day with the green bars showing the count of successful builds and red bars showing the count of failed/aborted builds.
       1. Recent Failures: This shows the most recent failures and their trend. This table is sorted by newest by default and can be filtered on any field.
       1. Recent Results: This shows the last 30 days of results. This table is sorted by most recent can can be filtered on any field.
-  [![](buildsummary.png)](http://jenkins.propter.net:443/#)
+  [![](docs/buildsummary.png)](http://jenkins.propter.net:443/#)
   1. [RPC-Upgrade-Matrix](http://jenkins.propter.net/job/RPC-Upgrade-Matrix/): Job which works out valid upgrade paths for master, active branches and previous major release. Each upgrade path is tested via an RPC-AIO job, which deploys the older version, runs tempest, then upgrades to the newer version and re-runs tempest.
   1. [JJB-Jenkins-RPC-PR-aio](http://jenkins.propter.net/job/JJB-Jenkins-RPC-PR-aio/), [JJB-Jenkins-RPC-PR-upgrade](http://jenkins.propter.net/job/JJB-Jenkins-RPC-PR-upgrade/). These jobs run against jenkins-rpc, testing changes to [aio_build_script](https://github.com/rcbops/jenkins-rpc/blob/master/scripts/aio_build_script.sh).
   1. [JJB-Job-Update](http://jenkins.propter.net/job/JJB-Job-Update/), [JJB-Job-Test](http://jenkins.propter.net/job/JJB-Job-Test/). JJB-Job-Test does a syntax test on PRs to [jobs.yaml](https://github.com/rcbops/jenkins-rpc/blob/master/rpc-jobs/jobs.yaml). JJB-Job-Update is a post-merge job that applies changes to jobs.yaml to jenkins.
