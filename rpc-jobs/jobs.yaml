@@ -88,6 +88,13 @@
           context: upgrade
           branches: "liberty-.*"
           UPGRADE: "yes"
+      - 'JJB-RPC-AIO_{series}-{context}':
+          series: mitaka
+          branch: "master" # TODO: Change to mitaka-13.1 on release.
+          context: upgrade
+          branches: "mitaka-13\\.[^0].*"
+          UPGRADE: "yes"
+          UPGRADE_FROM_REF: "origin/liberty-12.2"
 
 ## Job Definitions
 # This template is for testing PRs against Jenkins-RPC
