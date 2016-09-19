@@ -196,7 +196,9 @@ if [ "$UPGRADE" == "yes" ]; then
     override_oa
     log_git_status
     if [[ "$UPGRADE_TYPE" == "major" ]]; then
-      run_rpc_deploy upgrade.sh
+      # 13.0 renamed upgrade upgrade.sh to test-upgrade.sh
+      upgrade_script=$(basename scripts/*upgrade.sh)
+      run_rpc_deploy $upgrade_script
     else
       run_rpc_deploy
     fi
