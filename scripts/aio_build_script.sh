@@ -76,6 +76,21 @@ check_for_existing_config(){
   fi
 }
 
+select_fastest_mirror(){
+  script_sha="7f70ca7ff5ccec53fa17cdf4cc64c52a73168c5e"
+  script_url="https://raw.githubusercontent.com/openstack/openstack-ansible/\
+$script_sha/scripts/fastest-infra-wheel-mirror.py"
+  wheel_url=$(curl $script_url | python )
+  base_url=${wheel_url%wheel*}
+  export UBUNTU_REPO="${base_url}ubuntu"
+  # Infra mirrors don't have signatures, so apt config must be updated to
+  # allow unsigned packages
+  echo 'APT::Get::AllowUnauthenticated "true";' | sudo tee \
+    /etc/apt/apt.conf.d/99unauthenticated
+  export UNAUTHENTICATED_APT=yes
+
+}
+
 
 check_for_existing_config
 
@@ -173,6 +188,10 @@ tempest_tempest_conf_overrides:
   volume-feature-enabled:
     snapshot: True
 EOVARS
+
+if [[ ${UBUNTU_REPO:-auto} == "auto" ]]; then
+  select_fastest_mirror
+fi
 
 # Set ubuntu repo to supplied value. Effects Host bootstrap, and container default repo.
 export BOOTSTRAP_OPTS="${BOOTSTRAP_OPTS:-} bootstrap_host_ubuntu_repo=${UBUNTU_REPO}"
