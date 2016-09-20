@@ -265,69 +265,69 @@
       - postbuildscript:
           script-only-if-succeeded: false
           builders:
-            shell: |
-              #!/usr/bin/sudo -E /bin/bash
+             - shell: |
+                #!/usr/bin/sudo -E /bin/bash
 
-              # Shell Options
-              set +x
-              set +e
-              set -u
-              prep_artefacts(){{
-                echo "****** Copy Logs To Jenkins Workspace For Archival *******"
+                # Shell Options
+                set +x
+                set +e
+                set -u
+                prep_artefacts(){{
+                  echo "****** Copy Logs To Jenkins Workspace For Archival *******"
 
-                #copy logs into jenkins workspace so they can be archived with the results
-                mkdir -p archive
-                cp -rL /openstack/log archive/openstack
-                cp -rL /var/log archive/local
+                  #copy logs into jenkins workspace so they can be archived with the results
+                  mkdir -p archive
+                  cp -rL /openstack/log archive/openstack
+                  cp -rL /var/log archive/local
 
-                # collect openstack etc dirs from containers
-                find /var/lib/lxc/*/rootfs/etc/ -name policy.json -o -name swift.conf \
-                  |while read policy; do \
-                  src=$(dirname $policy); \
-                  service=$(basename $src); \
-                  container=$(cut -d/ -f 5 <<<$src); \
-                  mkdir -p archive/etc/$container/; cp -r $src/ archive/etc/$container/;  done
+                  # collect openstack etc dirs from containers
+                  find /var/lib/lxc/*/rootfs/etc/ -name policy.json -o -name swift.conf \
+                    |while read policy; do \
+                    src=$(dirname $policy); \
+                    service=$(basename $src); \
+                    container=$(cut -d/ -f 5 <<<$src); \
+                    mkdir -p archive/etc/$container/; cp -r $src/ archive/etc/$container/;  done
 
-                # collect openstack etc dirs from host
-                find /etc -name policy.json -o -name swift.conf\
-                  |while read policy; do \
-                  src=$(dirname $policy); \
-                  mkdir -p archive/etc; cp -r $src/ archive/etc/;  done
+                  # collect openstack etc dirs from host
+                  find /etc -name policy.json -o -name swift.conf\
+                    |while read policy; do \
+                    src=$(dirname $policy); \
+                    mkdir -p archive/etc; cp -r $src/ archive/etc/;  done
 
-                # Collect Rabbit, Mysql & Memcached configs
-                # Copy from all containers to one dir, don't care that it will get overridden
-                # should be the same anyway.
-                cp -r /var/lib/lxc/*rabbit*/rootfs/etc/rabbitmq archive/etc/
-                cp -r /var/lib/lxc/*galera*/rootfs/etc/mysql archive/etc/
-                cp -r /var/lib/lxc/*memcached*/rootfs/etc/memcached.conf archive/etc/
+                  # Collect Rabbit, Mysql & Memcached configs
+                  # Copy from all containers to one dir, don't care that it will get overridden
+                  # should be the same anyway.
+                  cp -r /var/lib/lxc/*rabbit*/rootfs/etc/rabbitmq archive/etc/
+                  cp -r /var/lib/lxc/*galera*/rootfs/etc/mysql archive/etc/
+                  cp -r /var/lib/lxc/*memcached*/rootfs/etc/memcached.conf archive/etc/
 
-                # Collect MAAS agent config
-                cp -r /etc/rackspace-monitoring-agent.conf.d archive/etc/
-                cp /etc/rackspace-monitoring-agent.cfg archive/etc/
+                  # Collect MAAS agent config
+                  cp -r /etc/rackspace-monitoring-agent.conf.d archive/etc/
+                  cp /etc/rackspace-monitoring-agent.cfg archive/etc/
 
-                # Jenkins user must be able to read all files to archive and transfer to
-                # the master. Unreadable files will cause the whole archive operation to fail
-                chown -R jenkins archive
+                  # Jenkins user must be able to read all files to archive and transfer to
+                  # the master. Unreadable files will cause the whole archive operation to fail
+                  chown -R jenkins archive
 
-                # remove dangling/circular symlinks
-                find archive -type l -exec test ! -e {{}} \; -delete
+                  # remove dangling/circular symlinks
+                  find archive -type l -exec test ! -e {{}} \; -delete
 
-                # delete anything that isn't a file or directory - pipes, specials etc
-                find archive ! -type d  ! -type f -delete
+                  # delete anything that isn't a file or directory - pipes, specials etc
+                  find archive ! -type d  ! -type f -delete
 
-                # delete anything not readable by the jenkins user
-                find archive \
-                  |while read f; \
-                  do sudo -u jenkins [ -r $f ] || {{ echo $f; rm -rf $f; }}; done
+                  # delete anything not readable by the jenkins user
+                  find archive \
+                    |while read f; \
+                    do sudo -u jenkins [ -r $f ] || {{ echo $f; rm -rf $f; }}; done
 
-                # Delete anything over 1GB. This is to prevent suspiciously large
-                # logs from filling up the artefact store.
-                find . -size +1G -delete
+                  # Delete anything over 1GB. This is to prevent suspiciously large
+                  # logs from filling up the artefact store.
+                  find . -size +1G -delete
 
-                #don't return non-zero, ever.
-                :
-              }}
-              prep_artefacts
+                  #don't return non-zero, ever.
+                  :
+                }}
+                prep_artefacts
       - archive:
           artifacts: "archive/**/*"
           allow-empty: true
