@@ -187,6 +187,7 @@ run_holland
 
 if [ "$UPGRADE" == "yes" ]; then
     git stash
+    git submodule foreach git stash
     git checkout ${sha1}
     if [[ ! -z "${ghprbTargetBranch:-}" ]]; then
       integrate_proposed_change
