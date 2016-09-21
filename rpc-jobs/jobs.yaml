@@ -245,7 +245,7 @@
               # long stat widths specified to ensure paths aren't truncated
               git show --stat=400,400 origin/$sha1 \
                   |awk '/\|/{{print $1}}' \
-                  |egrep -v '*.md$' \
+                  |egrep -v -e '.*md$' -e '.*rst$' -e '^releasenotes/' \
                   || {{ echo "Skipping AIO build as no non-doc changes were detected"
                       prep_artefacts
                       exit 0
