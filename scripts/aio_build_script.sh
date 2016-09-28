@@ -189,6 +189,23 @@ tempest_tempest_conf_overrides:
     snapshot: True
 EOVARS
 
+# Ensure raw_multi_journal is False for upgrades.
+# This is because of the way migrate-yaml.py behaves with the
+# '--for-testing-take-new-vars-only'; meaning that the new
+# default variables will be set in the user_*_variables_overrides.yml
+# file. Since raw_multi_journal is set to False as part of the deploy.sh
+# process, but is set to True in Mitaka's
+# user_rpco_user_variables_defaults.yml file, this will result in
+# migrate-yaml.py adding 'raw_multi_journal: True' in the overrides.
+# To avoid this behavior in gate, it is overridden here.
+# The same is true for journal_size, and maas_notification_plan.
+if [ "$UPGRADE" == "yes" ]; then
+    echo "raw_multi_journal: false" | tee -a $uev
+    echo "journal_size: 1024" | tee -a $uev
+    echo "maas_notification_plan: npTechnicalContactsEmail" | tee -a $uev
+    echo "osd_directory: true" | tee -a $uev
+fi
+
 if [[ ${UBUNTU_REPO:-auto} == "auto" ]]; then
   select_fastest_mirror
 fi
