@@ -103,6 +103,15 @@
           UPGRADE: "yes"
           UPGRADE_FROM_REF: "origin/liberty-12.2"
 
+- project:
+    name: 'JJB-AIO-Test-Jobs'
+    jobs:
+      - 'JJB-RPC-AIO_{series}-{context}':
+          series: master
+          branch: master
+          branches: "do_not_build_on_pr"
+          context: cidev
+
 ## Job Definitions
 # This template is for testing PRs against Jenkins-RPC
 # It is triggered by PR and runs an AIO with the proposed version
@@ -132,6 +141,8 @@
     branch: master
     # PRs targetting branches that match this pattern will be tested with this job
     branches: "kilo|liberty-.*|mitaka-.*|master"
+    REPO_HOST: "23.253.158.148"
+    REPO_USER: "root"
 
     name: 'JJB-RPC-AIO_{series}-{context}'
     project-type: freestyle
@@ -159,6 +170,9 @@
         -  text:
             credential-id: 281f38e2-a060-4188-9971-b6bb5e600ef3
             variable: rackspace_cloud_api_key
+        -  text:
+            credential-id: RPC_REPO_KEY
+            variable: REPO_KEY
 
       # Ensure builds timeout after 30 mins of inactivity
       - raw:
@@ -342,6 +356,81 @@
                   :
                 }}
                 prep_artefacts
+      - postbuildscript:
+          script-only-if-succeeded: true
+          builders:
+            - shell: |
+               #!/usr/bin/sudo -E /bin/bash
+
+               # Required Environment Variables:
+               # REPO_KEY - ssh key provided by credentials binding
+
+               # Required JJB/Jinja template variables
+               # REPO_USER - user to login to repo server as
+               # REPO_HOST - hostname/ip of repo server
+               REPO_USER="{REPO_USER}"
+               REPO_HOST="{REPO_HOST}"
+
+               # Shell Opts
+               set +x # avoid leaking ssh keys
+               set -u # avoid ref before assignment errors
+
+               trap "exit 0" EXIT
+               # The above trap in combination with -u will cause this script to
+               # halt when attempting to read an undefined variable, but it will
+               # still exit 0. Halting on undefined variables is important so
+               # that files don't get rsynced to unexpected locations.
+
+               push(){{
+                 src="$1"
+                 dest="$2"
+                 description="$src to rpc-repo:$dest"
+                 echo "===== Start: $description  ===="
+                 [[ -d $src ]] || {{
+                   echo "Src directory $src not found"
+                   exit
+                 }}
+                 rsync \
+                   --delay-updates \
+                   --recursive \
+                   --links \
+                   --itemize-changes \
+                   --rsh="ssh -i ${{key}} -o StrictHostKeyChecking=no" \
+                   $src \
+                   ${{REPO_USER}}@${{REPO_HOST}}:${{dest}}
+                 rc=$?
+                 echo "===== End: $description (rc: $rc) ===="
+               }}
+
+               # Vars
+
+               repo_container="$(lxc-ls '.*_repo_'|head -n1)"
+               local_base="/openstack/${{repo_container}}/repo"
+               remote_base="/var/www/repo"
+
+               # Main
+
+               [[ -z "${{repo_container}}" ]] && {{
+                 echo "No repo container found, quitting"
+                 exit 0
+               }}
+
+               # Prep key, header and footer are stripped out because line
+               # breaks are lost, easist to remove header and footer, then
+               # convert all spaces to newlines, then add header/footer back in
+               key=$(tempfile)
+               echo "-----BEGIN RSA PRIVATE KEY-----" > $key
+               echo "$REPO_KEY" \
+                 |sed -e 's/\s*-----BEGIN RSA PRIVATE KEY-----\s*//' \
+                      -e 's/\s*-----END RSA PRIVATE KEY-----\s*//' \
+                      -e 's/ /\n/g' >> $key
+               echo "-----END RSA PRIVATE KEY-----" >> $key
+               chmod 600 ${{key}}
+
+               push "${{local_base}}/venvs/" "${{remote_base}}/venvs"
+               push "${{local_base}}/pools/" "${{remote_base}}/pools"
+
+               rm $key
       - archive:
           artifacts: "archive/**/*"
           allow-empty: true
