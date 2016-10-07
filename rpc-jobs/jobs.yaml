@@ -61,7 +61,7 @@
           branch: liberty-12.2
           branches: "liberty-.*"
       - mitaka:
-          branch: mitaka-13.0
+          branch: mitaka-13.1
           branches: "mitaka-.*"
       - master:
           branch: master
@@ -90,9 +90,16 @@
           UPGRADE: "yes"
       - 'JJB-RPC-AIO_{series}-{context}':
           series: mitaka
-          branch: "master" # TODO: Change to mitaka-13.1 on release.
+          branch: "mitaka-13.1"
           context: upgrade
           branches: "mitaka-13\\.[^0].*"
+          UPGRADE: "yes"
+          UPGRADE_FROM_REF: "origin/liberty-12.2"
+      - 'JJB-RPC-AIO_{series}-{context}':
+          series: master
+          branch: "master"
+          context: upgrade
+          branches: "master"
           UPGRADE: "yes"
           UPGRADE_FROM_REF: "origin/liberty-12.2"
 
