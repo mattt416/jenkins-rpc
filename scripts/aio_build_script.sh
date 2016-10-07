@@ -16,7 +16,7 @@ log_git_status(){
 run_rpc_deploy(){
   script=${1:-deploy.sh}
   echo "********************** Run RPC $script ***********************"
-  sudo -E\
+  sudo -EH\
     TERM=linux \
     DEPLOY_AIO=yes \
     DEPLOY_HAPROXY=yes \
@@ -32,7 +32,7 @@ run_tempest(){
   # jenkins user does not have the necessary permissions to run lxc commands
   # serial needed to ensure all tests
   echo "********************** Run Tempest ***********************"
-  sudo -E lxc-attach -n $(sudo -E lxc-ls |grep utility) -- /bin/bash -c "RUN_TEMPEST_OPTS='--serial' /opt/openstack_tempest_gate.sh ${TEMPEST_TESTS}"
+  sudo -EH lxc-attach -n $(sudo -E lxc-ls |grep utility) -- /bin/bash -c "RUN_TEMPEST_OPTS='--serial' /opt/openstack_tempest_gate.sh ${TEMPEST_TESTS}"
   echo "********************** Tempest Completed Succesfully ***********************"
 }
 run_holland(){
@@ -41,7 +41,7 @@ run_holland(){
   cp buildscript_repo/scripts/test_holland.yml /opt/rpc-openstack/rpcd/playbooks
   # Run the playbook
   pushd /opt/rpc-openstack/rpcd/playbooks
-    sudo -E openstack-ansible test_holland.yml
+    sudo -EH openstack-ansible test_holland.yml
   popd
   # Remove the playbook
   rm /opt/rpc-openstack/rpcd/playbooks/test_holland.yml
