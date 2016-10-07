@@ -50,7 +50,9 @@ class Build(object):
             self.raw_branch = self.env_vars.get('RPC_RELEASE', '')
         self.branch = self.raw_branch.replace('-', '_').replace('.', '_')
         self.commit = self.env_vars.get('ghprbActualCommit', '')
-        if self.env_vars.get('DEPLOY_CEPH') == 'yes':
+        if self.env_vars.get('UPGRADE') == 'yes':
+            self.btype = 'upgrade'
+        elif self.env_vars.get('DEPLOY_CEPH') == 'yes':
             self.btype = 'ceph'
         elif self.env_vars.get('HEAT_TEMPLATE', ''):
             self.btype = 'multinode'
@@ -103,9 +105,10 @@ class Build(object):
         self.build_hierachy = []
         cause_elem = self.tree.xpath(
             '//causes | //causeBag/entry')[0].getchildren()[0]
+
         def normalise_job_name(name):
             # ensure that long names can be wrapped by inserting spaces
-            return re.sub('([/=,.])','\\1 ', name)
+            return re.sub('([/=,.])', '\\1 ', name)
         while True:
             cause_dict = {}
             tag = cause_elem.tag

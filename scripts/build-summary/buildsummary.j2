@@ -133,10 +133,10 @@ $(document).ready( function () {
   </nav>
 
   {% macro mcell(idstring) %}
-    {% set p = buildcount[idstring].s_percent %}
-    {% set s_hist = periodichistogram[idstring+'_SUCCESS'] %}
-    {% set f_hist = periodichistogram[idstring+'_FAILURE'] %}
-    {% set max = periodichistogram[idstring+'_stats']['max'] %}
+    {% set p = buildcount.get(idstring, {'s_percent':0}).s_percent %}
+    {% set s_hist = periodichistogram.get(idstring+'_SUCCESS', [0]*30) %}
+    {% set f_hist = periodichistogram.get(idstring+'_FAILURE', [0]*30) %}
+    {% set max = periodichistogram.get(idstring+'_stats', {'max': 0 })['max'] %}
     <td class="{% if p > 95 %}success{% elif p < 60 %}danger{% elif p <= 95 %}warning{% endif %}">
       <div class="spark_group">
         <span class="spark_shist" values="{{s_hist|join(',')}}" data-min="0" data-max="{{max}}"></span>
@@ -151,24 +151,40 @@ $(document).ready( function () {
   red/negative are failed (or aborted) jobs. Most recent on the right.</p>
   <table id="summary" class="table">
     <thead>
-      <tr><th></th><th>Master</th><th>Liberty</th><th>Kilo</th></tr>
+      <tr>
+        <th></th>
+        <th>Master</th>
+        <th>Mitaka</th>
+        <th>Liberty</th>
+        <th>Kilo</th>
+      </tr>
     </thead>
     <tbody>
       <tr>
         <th>Full</th>
         {{ mcell('master_full_periodic') }}
+        {{ mcell('mitaka_13_1_full_periodic') }}
         {{ mcell('liberty_12_2_full_periodic') }}
         {{ mcell('kilo_full_periodic') }}
       </tr>
       <tr>
         <th>Ceph</th>
         {{ mcell('master_ceph_periodic') }}
+        {{ mcell('mitaka_13_1_ceph_periodic') }}
         {{ mcell('liberty_12_2_ceph_periodic') }}
         {{ mcell('kilo_ceph_periodic') }}
       </tr>
       <tr>
+        <th>Upgrade (from previous major)</th>
+        {{ mcell('master_upgrade_periodic') }}
+        {{ mcell('mitaka_13_1_upgrade_periodic') }}
+        {{ mcell('liberty_12_2_upgrade_periodic') }}
+        <td>N/A</td>
+      </tr>
+      <tr>
         <th>Heat Multinode</th>
         {{ mcell('master_multinode_periodic') }}
+        <td>N/A</td>
         <td>N/A</td>
         <td>N/A</td>
       </tr>
