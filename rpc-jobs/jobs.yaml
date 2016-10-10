@@ -111,6 +111,8 @@
           branch: master
           branches: "do_not_build_on_pr"
           context: cidev
+          CRON: ""
+
 
 ## Job Definitions
 # This template is for testing PRs against Jenkins-RPC
@@ -143,6 +145,7 @@
     branches: "kilo|liberty-.*|mitaka-.*|master"
     REPO_HOST: "23.253.158.148"
     REPO_USER: "root"
+    CRON: "H */6 * * *"
 
     name: 'JJB-RPC-AIO_{series}-{context}'
     project-type: freestyle
@@ -229,7 +232,7 @@
             OA_BRANCH={OA_BRANCH}
       - rpc-openstack-github
     triggers:
-      - timed: "H */2 * * *"
+      - timed: "{CRON}"
       - github-pull-request:
           org-list:
             - rcbops
