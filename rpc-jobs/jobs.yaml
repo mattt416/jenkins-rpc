@@ -153,6 +153,7 @@
     logrotate:
       daysToKeep: 30
     wrappers:
+      - ansicolor
       - timestamps
       - credentials-binding:
         - text:
