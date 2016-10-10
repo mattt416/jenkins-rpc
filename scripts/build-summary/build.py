@@ -49,6 +49,7 @@ class Build(object):
         if self.raw_branch == '':
             self.raw_branch = self.env_vars.get('RPC_RELEASE', '')
         self.branch = self.raw_branch.replace('-', '_').replace('.', '_')
+        self.series = re.sub('-.*$', '', self.raw_branch)
         self.commit = self.env_vars.get('ghprbActualCommit', '')
         if self.env_vars.get('UPGRADE') == 'yes':
             self.btype = 'upgrade'
@@ -674,19 +675,10 @@ class Build(object):
                 break
 
     def __str__(self):
-        s = ("{timestamp} {result} {job_name}/{build_num} --> "
-             "{upstream_project}/{upstream_build_num}").format(
+        return ("{timestamp} {result} {job_name}/{build_num}"
+                " {branch}").format(
             timestamp=self.timestamp.isoformat(),
             job_name=self.job_name,
             build_num=self.build_num,
             result=self.result,
-            upstream_project=self.upstream_project,
-            upstream_build_num=self.upstream_build_num)
-        if hasattr(self, 'gh_pull'):
-            s += ' pr/{gh_pull} target:{gh_target} "{gh_title}"'.format(
-                gh_pull=self.gh_pull,
-                gh_target=self.gh_target,
-                gh_title=self.gh_title)
-        if self.failures:
-            s += " " + ",".join(self.failures)
-        return s
+            branch=self.branch)

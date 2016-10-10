@@ -1,6 +1,8 @@
 import click
 import pickle
 
+from build import Build
+
 
 @click.group()
 def cli():
@@ -14,10 +16,10 @@ def query(cache_file, query):
     with open(cache_file, 'rb') as f:
         key, criteria = query.split('=')
         buildobjs = pickle.load(f)
-        for build in buildobjs:
-            item = build.getattr(key)
+        for name, build in buildobjs.items():
+            item = getattr(build, key, '')
             if criteria in item:
-                print(build)
+                print(build, item)
 
 
 cli()

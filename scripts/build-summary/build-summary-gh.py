@@ -109,13 +109,13 @@ def print_html(buildobjs):
     twodaysago = datetime.datetime.now() - datetime.timedelta(days=2)
     for build in [b for b in buildobjs if b.timestamp > twodaysago]:
         buildcount['all'].b(build)
-        buildcount[build.branch].b(build)
+        buildcount[build.series].b(build)
         buildcount[build.trigger].b(build)
         buildcount[build.btype].b(build)
-        buildcount['{b}_{s}_{t}'.format(
-                   b=build.branch,
-                   s=build.btype,
-                   t=build.trigger)].b(build)
+        buildcount['{series}_{btype}_{trigger}'.format(
+                   series=build.series,
+                   btype=build.btype,
+                   trigger=build.trigger)].b(build)
     periodichistogram = {}
     for build in buildobjs:
         # count aborts as failure for the sake of graphs
@@ -124,8 +124,8 @@ def print_html(buildobjs):
             result = 'FAILURE'
         if build.trigger != 'periodic':
             continue
-        key_base = '{branch}_{btype}_{trigger}'.format(
-            branch=build.branch,
+        key_base = '{series}_{btype}_{trigger}'.format(
+            series=build.series,
             btype=build.btype,
             trigger=build.trigger)
         key = '{base}_{result}'.format(
