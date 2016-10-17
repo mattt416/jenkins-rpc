@@ -307,12 +307,12 @@
                 prep_artefacts(){{
                   echo "****** Copy Logs To Jenkins Workspace For Archival *******"
 
-                  #copy logs into jenkins workspace so they can be archived with the results
+                  # Copy logs into jenkins workspace so they can be archived with the results
                   mkdir -p archive
                   cp -rL /openstack/log archive/openstack
                   cp -rL /var/log archive/local
 
-                  # collect openstack etc dirs from containers
+                  # Collect openstack etc dirs from containers
                   find /var/lib/lxc/*/rootfs/etc/ -name policy.json -o -name swift.conf \
                     |while read policy; do \
                     src=$(dirname $policy); \
@@ -320,7 +320,22 @@
                     container=$(cut -d/ -f 5 <<<$src); \
                     mkdir -p archive/etc/$container/; cp -r $src/ archive/etc/$container/;  done
 
-                  # collect openstack etc dirs from host
+                  # Collect ceph configurations from containers.
+                  # Note: On jobs where ceph is not deployed, the following
+                  #       directory will be empty.
+                  find /var/lib/lxc/*/rootfs/etc/ceph/ceph.conf \
+                    |while read ceph_config; do \
+                    container=$(cut -d/ -f 5 <<<$ceph_config); \
+                    mkdir -p archive/etc/$container/; cp $ceph_config archive/etc/$container/; done
+
+                  # Collect ceph configurations from host.
+                  # Note: On jobs where ceph is not deployed, the following
+                  #       directory will be empty.
+                  if [ -f /etc/ceph/ceph.conf ]; then
+                    cp /etc/ceph/ceph.conf archive/etc/
+                  fi
+
+                  # Collect openstack etc dirs from host
                   find /etc -name policy.json -o -name swift.conf\
                     |while read policy; do \
                     src=$(dirname $policy); \
@@ -341,13 +356,13 @@
                   # the master. Unreadable files will cause the whole archive operation to fail
                   chown -R jenkins archive
 
-                  # remove dangling/circular symlinks
+                  # Remove dangling/circular symlinks
                   find archive -type l -exec test ! -e {{}} \; -delete
 
-                  # delete anything that isn't a file or directory - pipes, specials etc
+                  # Delete anything that isn't a file or directory - pipes, specials etc
                   find archive ! -type d  ! -type f -delete
 
-                  # delete anything not readable by the jenkins user
+                  # Delete anything not readable by the jenkins user
                   find archive \
                     |while read f; \
                     do sudo -u jenkins [ -r $f ] || {{ echo $f; rm -rf $f; }}; done
@@ -356,7 +371,7 @@
                   # logs from filling up the artefact store.
                   find . -size +1G -delete
 
-                  #don't return non-zero, ever.
+                  # Don't return non-zero, ever.
                   :
                 }}
                 prep_artefacts
