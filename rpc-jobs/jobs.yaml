@@ -156,6 +156,8 @@
     logrotate:
       daysToKeep: 30
     wrappers:
+      - logstash:
+          use-redis: False
       - ansicolor
       - timestamps
       - credentials-binding:
