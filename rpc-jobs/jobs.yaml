@@ -156,8 +156,6 @@
     logrotate:
       daysToKeep: 30
     wrappers:
-      - logstash:
-          use-redis: False
       - ansicolor
       - timestamps
       - credentials-binding:
@@ -459,6 +457,10 @@
       - junit:
           results: "archive/openstack/*_utility_*/*.xml"
           allow-empty-results: true
+      # Push logs over to logstash
+      - logstash:
+          max-lines: 70000
+          fail-build: false
 
 # This template has two variables - type and upgrade.
 - job-template:
