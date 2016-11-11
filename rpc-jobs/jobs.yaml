@@ -113,6 +113,37 @@
           context: cidev
           CRON: ""
 
+- project:
+    name: 'JJB-Misc-Jobs'
+    jobs:
+      - 'JJB-Misc-{name}':
+          name: Build-Summary
+          shell: |
+            #!/bin/bash -x
+            . /opt/jenkins/venvs/buildsummary/bin/activate
+            cd scripts/build-summary
+            python build-summary-gh.py /opt/jenkins_builds/jobs/{{RPC-AIO,RPC-Training-Multinode,JJB-RPC-AIO*,JJB-Jenkins-RPC-PR*}}/builds/*/build.xml \
+                > /opt/jenkins/www/index_tmp.html \
+                && cp /opt/jenkins/www/index_tmp.html /opt/jenkins/www/index.html
+      - 'JJB-Misc-{name}':
+          name: AIO-Cleanup
+          shell: |
+            #!/bin/bash
+
+            source /opt/jenkins/creds/mattt_jenkins_iad
+            source /opt/jenkins/venvs/rpcheat/bin/activate
+            source /opt/jenkins/creds/jenkins_api_access.creds
+
+            python scripts/aio_cleanup.py
+      - 'JJB-Misc-{name}':
+          name: Multinode-Cleanup
+          shell: |
+            #!/bin/bash
+
+            set -x
+            set -e
+            bash scripts/heat_cleanup.sh
+
 
 ## Job Definitions
 # This template is for testing PRs against Jenkins-RPC
@@ -499,6 +530,28 @@
             UPGRADE_TYPE=major
             sha1=liberty-12.2
             ghprbTargetBranch=liberty-12.2
+
+- job-template:
+    name: "JJB-Misc-{name}"
+    display-name: "JJB-Misc-{name}"
+    project-type: freestyle
+    description: 'Managed by JJB: Misc {name}'
+    defaults: global
+    disabled: false
+    concurrent: false
+    node: master
+    logrotate:
+      numToKeep: 50
+    # NOTE(mattt): Is this property actually required here?
+    properties:
+      - jenkins-rpc-github
+    scm:
+      - jenkins-rpc-git
+    triggers:
+      - timed: "H/5 * * * *"
+    builders:
+      - shell: |
+          {shell}
 
 # Update Jenkins Jobs.
 # This job runs after changes are merged to jenkins-rpc.
