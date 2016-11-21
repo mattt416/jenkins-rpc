@@ -178,6 +178,9 @@ fi
 
 #Supply fixed cirros image while empty key bug is not fixed upstream.
 tee -a $uev >/dev/null <<EOVARS
+# (alextricity25) Adding the cirros_*_url vars. This var has been dropped from OSA in
+# newton so we are carrying it here so we have support for both newton and earlier releases.
+cirros_tgz_url: "http://download.cirros-cloud.net/{{ cirros_version }}/cirros-{{ cirros_version }}-x86_64-uec.tar.gz"
 cirros_img_url: "http://rpc-repo.rackspace.com/rpcgating/cirros-0.3.4-x86_64-dropbearmod.img"
 tempest_images:
   - url: "{{cirros_img_url}}"
