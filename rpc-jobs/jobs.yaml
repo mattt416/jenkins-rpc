@@ -617,3 +617,90 @@
           status-context: 'JJB-Test'
     builders:
       - shell: scripts/run_jjb.sh test
+
+- job:
+    name: JJB-RPC-Training-Multinode
+    node: master
+    concurrent: true
+    build-discarder:
+      daysToKeep: 30
+    triggers:
+      - timed: "H */6 * * *"
+    parameters:
+      - string:
+          name: RPC_HEAT_ANSIBLE_REPO
+          default: "https://github.com/rcbops/rpc-heat-ansible/"
+          description: "Repo to clone for rpc-heat-ansible templates"
+      - string:
+          name: RPC_HEAT_ANSIBLE_RELEASE
+          default: "rpc_gating"
+          description: "ref to checkout for rpc-heat-ansible"
+      - string:
+          name: RPC_HEAT_ANSIBLE_PLAYBOOK
+          default: "rpc-12.0-playbook.yml"
+          description: "playbook to run from rpc-heat-ansible"
+      - string:
+          name: RPC_HEAT_ANSIBLE_TAGS
+          default: "compute,block,object,ceph,tempest"
+          description: "Tags to run from the rpc-heat-ansible playbook"
+      - string:
+          name: RPC_RELEASE
+          default: "master"
+          description: "ref to checkout for rpc-openstack"
+      - string:
+          name: HEAT_TEMPLATE
+          default: "ha-full-ceph"
+          description: "template to run form rpc-heat-ansible /templates/rpc-${HEAT_TEMPLATE}.yml"
+      - string:
+          name: DEPLOY_RETRIES
+          default: "2"
+          description: "how many times to retry the rpc deploy"
+      - string:
+          name: APPLY_PATCHES
+          default: "False"
+          description: "Deploy patches carried in rpc-heat-ansible?"
+      - string:
+          name: DELETE_STACK
+          default: "yes"
+          description: "yes/no - cleanup stack at end of job?"
+      - string:
+          name: TEMPEST_TESTS
+          default: "scenario defcore"
+          description: "tempest test sets to run. Test sets are defined in osa/openstack_tempest_gate.sh"
+    wrappers:
+      - ansicolor
+      - timestamps
+      - credentials-binding:
+        - text:
+            credential-id: rpcorchestration_api_key
+            variable: rpcorchestration_api_key
+        -  text:
+            credential-id: rpcorchestration_password
+            variable: rpcorchestration_password
+        -  text:
+            credential-id: rpcorechestration_username
+            variable: rpcorechestration_username
+        -  text:
+            credential-id: rpcorchestration_tenant_name
+            variable: rpcorchestration_tenant_name
+      - timeout:
+          timeout: 240
+          fail: True
+    scm:
+      - git:
+          url: "${RPC_HEAT_ANSIBLE_REPO}"
+          branches:
+            - "${RPC_HEAT_ANSIBLE_RELEASE}"
+    builders:
+        - shell: |
+            jenkins/build.sh
+    publishers:
+      - archive:
+          artifacts: "artifacts/**"
+          allow-empty: true
+      # Publish tempest results to the Jenkins UI
+      - junit:
+          results: "artifacts/*.xml"
+          allow-empty-results: true
+
+
