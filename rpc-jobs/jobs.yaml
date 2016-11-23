@@ -111,7 +111,7 @@
             #!/bin/bash -x
             . /opt/jenkins/venvs/buildsummary/bin/activate
             cd scripts/build-summary
-            python build-summary-gh.py /opt/jenkins_builds/jobs/{{RPC-AIO,RPC-Training-Multinode,JJB-RPC-AIO*}}/builds/*/build.xml \
+            python build-summary-gh.py /opt/jenkins_builds/jobs/{{RPC-AIO,JJB-RPC-Training-Multinode,JJB-RPC-AIO*}}/builds/*/build.xml \
                 > /opt/jenkins/www/index_tmp.html \
                 && cp /opt/jenkins/www/index_tmp.html /opt/jenkins/www/index.html
       - 'JJB-Misc-{name}':
