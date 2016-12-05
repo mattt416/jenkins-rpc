@@ -477,7 +477,11 @@
                # The following artifacts are purely additive - nothing must
                # ever be deleted at the target.
                push "${{local_base}}/pools/" "${{remote_base}}/pools"
-               push "${{local_base}}/links/" "${{remote_base}}/links"
+
+               # We need to skip the index.html file in this copy as that
+               # is one of the unnecessary files produced in the repo-build
+               # prior to Newton.
+               push "${{local_base}}/links/" "${{remote_base}}/links" "--exclude index.html"
 
                # The following artifacts must be exactly as they look in the
                # build when it completes. Anything that is on the target that
