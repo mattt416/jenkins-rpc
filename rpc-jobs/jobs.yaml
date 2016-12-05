@@ -429,6 +429,7 @@
                push(){{
                  src="$1"
                  dest="$2"
+                 extra_args=${{3:-}}
                  description="$src to rpc-repo:$dest"
                  echo "===== Start: $description  ===="
                  [[ -d $src ]] || {{
@@ -436,6 +437,7 @@
                    exit
                  }}
                  rsync \
+                   ${{extra_args}} \
                    --delay-updates \
                    --recursive \
                    --links \
@@ -472,10 +474,16 @@
                echo "-----END RSA PRIVATE KEY-----" >> $key
                chmod 600 ${{key}}
 
-               push "${{local_base}}/venvs/" "${{remote_base}}/venvs"
+               # The following artifacts are purely additive - nothing must
+               # ever be deleted at the target.
                push "${{local_base}}/pools/" "${{remote_base}}/pools"
-               push "${{local_base}}/os-releases/" "${{remote_base}}/os-releases"
                push "${{local_base}}/links/" "${{remote_base}}/links"
+
+               # The following artifacts must be exactly as they look in the
+               # build when it completes. Anything that is on the target that
+               # is not in the build must be removed.
+               push "${{local_base}}/venvs/*" "${{remote_base}}/venvs/" "--delete"
+               push "${{local_base}}/os-releases/*" "${{remote_base}}/os-releases/" "--delete"
 
                rm $key
       - archive:
