@@ -474,6 +474,8 @@
 
                push "${{local_base}}/venvs/" "${{remote_base}}/venvs"
                push "${{local_base}}/pools/" "${{remote_base}}/pools"
+               push "${{local_base}}/os-releases/" "${{remote_base}}/os-releases"
+               push "${{local_base}}/links/" "${{remote_base}}/links"
 
                rm $key
       - archive:
