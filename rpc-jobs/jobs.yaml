@@ -332,6 +332,12 @@
                   cp -rL /openstack/log archive/openstack
                   cp -rL /var/log archive/local
 
+                  # Copy horizon error.log files into jenkins archive
+                  find /var/lib/lxc/*horizon*/rootfs/var/log/apache2 -name error.log \
+                    |while read log; do \
+                    container=$(cut -d/ -f 5 <<<$log); \
+                    cp $log archive/openstack/$container; done
+
                   # Collect openstack etc dirs from containers
                   find /var/lib/lxc/*/rootfs/etc/ -name policy.json -o -name swift.conf \
                     |while read policy; do \
