@@ -176,18 +176,17 @@ horizon_extensions_git_package_name: "horizon-extensions"
 EOVARS
 fi
 
-# Supply fixed cirros image while empty key bug is not fixed upstream.
-# Both tempest_img_url and cirros_img_url are overridden since
-# cirros_img_url was removed in the newton release, but is still
-# needed for our job to run tests againsts previous releases.
-# tempest_img_url was introduced in newton and is needed for our tests
-# to run the newton tests.
+#Supply fixed cirros image while empty key bug is not fixed upstream.
 tee -a $uev >/dev/null <<EOVARS
+# (alextricity25) Adding the cirros_*_url vars. This var has been dropped from OSA in
+# newton so we are carrying it here so we have support for both newton and earlier releases.
+cirros_tgz_url: "http://download.cirros-cloud.net/{{ cirros_version }}/cirros-{{ cirros_version }}-x86_64-uec.tar.gz"
 cirros_img_url: "http://rpc-repo.rackspace.com/rpcgating/cirros-0.3.4-x86_64-dropbearmod.img"
-tempest_img_url: "http://rpc-repo.rackspace.com/rpcgating/cirros-0.3.4-x86_64-dropbearmod.img"
 tempest_images:
   - url: "{{cirros_img_url}}"
     sha256: "ec1120a9310ac3987feee4e3c5108d5d0fd0e594c4283804c17d673ebb2d3769"
+  - url: "{{cirros_tgz_url}}"
+    sha256: "95e77c7deaf0f515f959ffe329918d5dd23e417503d1d45e926a888853c90710"
 tempest_tempest_conf_overrides:
   volume-feature-enabled:
     snapshot: True
