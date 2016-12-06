@@ -497,11 +497,6 @@
       - junit:
           results: "archive/openstack/*_utility_*/*.xml"
           allow-empty-results: true
-      # Push logs over to logstash
-      - logstash:
-          max-lines: 70000
-          fail-build: false
-
 
 - job-template:
     name: "JJB-Misc-{name}"
