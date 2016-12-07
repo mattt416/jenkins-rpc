@@ -84,13 +84,6 @@
           branches: "mitaka-13\\.[^0].*"
           UPGRADE: "yes"
           UPGRADE_FROM_REF: "origin/liberty-12.2"
-      - 'JJB-RPC-AIO_{series}-{context}':
-          series: master
-          branch: "master"
-          context: upgrade
-          branches: "master"
-          UPGRADE: "yes"
-          UPGRADE_FROM_REF: "origin/liberty-12.2"
 
 - project:
     name: 'JJB-AIO-Test-Jobs'
