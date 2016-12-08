@@ -182,6 +182,10 @@ tee -a $uev >/dev/null <<EOVARS
 # newton so we are carrying it here so we have support for both newton and earlier releases.
 cirros_tgz_url: "http://download.cirros-cloud.net/{{ cirros_version }}/cirros-{{ cirros_version }}-x86_64-uec.tar.gz"
 cirros_img_url: "http://rpc-repo.rackspace.com/rpcgating/cirros-0.3.4-x86_64-dropbearmod.img"
+# (alextricity25) This variable is used to populate the image directives in tempest.conf in stable/newton.
+# We can't rely on the upstream value of this variable to be the same as cirros_img_url, so we also
+# override this variable here.
+tempest_image_file: "cirros-0.3.4-x86_64-dropbearmod.img"
 tempest_images:
   - url: "{{cirros_img_url}}"
     sha256: "ec1120a9310ac3987feee4e3c5108d5d0fd0e594c4283804c17d673ebb2d3769"
