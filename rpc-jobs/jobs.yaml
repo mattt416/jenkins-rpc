@@ -136,7 +136,7 @@
 #
 
 - job-template:
-    # defaults
+    # defaults - These must be set as the default value of a jenkins parameter in order to be injected into the build Environment.
     RPC_REPO: "https://github.com/rcbops/rpc-openstack"
     TEMPEST_TESTS: "scenario heat_api cinder_backup defcore"
     DEPLOY_CEPH: "no"
@@ -232,25 +232,63 @@
           name: USER_VARS
           default: "{USER_VARS}"
           description: "OSA/RPC USER_VARS to inject for this build"
+      - string:
+          name: UPGRADE
+          default: "{UPGRADE}"
+          description: "Run an upgrade? yes/no"
+      - string:
+          name: UPGRADE_FROM_REF
+          default: "{UPGRADE_FROM_REF}"
+          description: "An tag/sha/ref to upgrade from"
+      - string:
+          name: UPGRADE_FROM_NEAREST_TAG
+          default: "{UPGRADE_FROM_NEAREST_TAG}"
+          description: "Substitute the upgrade_from_ref for the nearest tag yes/no"
+      - string:
+          name: UPGRADE_TYPE
+          default: "{UPGRADE_TYPE}"
+          description: "Type of upgrade to perform. Majors have an upgrade script, others re-run deploy.sh"
+      - string:
+          name: RPC_REPO
+          default: "{RPC_REPO}"
+          description: "RPC REPO URL"
+      - string:
+          name: TEMPEST_TESTS
+          default: "{TEMPEST_TESTS}"
+          description: "Tempest test set to run, defined in osa/tempest-role/gate-check-commit"
+      - string:
+          name: DEPLOY_CEPH
+          default: "{DEPLOY_CEPH}"
+          description: "Deploy Ceph? yes/no"
+      - string:
+          name: DEPLOY_SWIFT
+          default: "{DEPLOY_SWIFT}"
+          description: "Deploy SwifT? yes/no"
+      - string:
+          name: UBUNTU_REPO
+          default: "{UBUNTU_REPO}"
+          description: "Ubuntu repo to use, currently requires all sections so not compatible with OS infra mirrors"
+      - string:
+          name: JENKINS_RPC_REPO
+          default: "{JENKINS_RPC_REPO}"
+          description: "Repo url for JENKINS_RPC"
+      - string:
+          name: JENKINS_RPC_BRANCH
+          default: "{JENKINS_RPC_BRANCH}"
+          description: "Branch to checkout for JENKINS_RPC"
+      - string:
+          name: BUILD_SCRIPT_PATH
+          default: "{BUILD_SCRIPT_PATH}"
+          description: "Path to the build script within JENKINS_RPC_REPO"
+      - string:
+          name: OA_REPO
+          default: "{OA_REPO}"
+          description: "Openstack Ansible Repo - can be used to override the RPC OSA submodule"
+      - string:
+          name: OA_BRANCH
+          default: "{OA_BRANCH}"
+          description: "Openstack Ansible Branch - can be used to override the RPC OSA submodule"
     properties:
-      # Pass JJB macro vars into the job env
-      - inject:
-          # Bind JJB template vars to jenkins environment variables
-          properties-content: |
-            RPC_REPO={RPC_REPO}
-            TEMPEST_TESTS={TEMPEST_TESTS}
-            DEPLOY_CEPH={DEPLOY_CEPH}
-            DEPLOY_SWIFT={DEPLOY_SWIFT}
-            UPGRADE={UPGRADE}
-            UPGRADE_FROM_REF={UPGRADE_FROM_REF}
-            UPGRADE_FROM_NEAREST_TAG={UPGRADE_FROM_NEAREST_TAG}
-            UPGRADE_TYPE={UPGRADE_TYPE}
-            UBUNTU_REPO={UBUNTU_REPO}
-            JENKINS_RPC_REPO={JENKINS_RPC_REPO}
-            JENKINS_RPC_BRANCH={JENKINS_RPC_BRANCH}
-            BUILD_SCRIPT_PATH={BUILD_SCRIPT_PATH}
-            OA_REPO={OA_REPO}
-            OA_BRANCH={OA_BRANCH}
       - rpc-openstack-github
     triggers:
       - timed: "{CRON}"
