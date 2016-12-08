@@ -94,6 +94,8 @@
           branches: "do_not_build_on_pr"
           context: cidev
           CRON: ""
+          DEPLOY_MAAS: "no"
+          USER_VARS: "maas_use_api: false"
 
 - project:
     name: 'JJB-Misc-Jobs'
@@ -222,6 +224,14 @@
               rpc-openstack git ref that points to the code to be tested
               (sha/tag/branch/etc).
               This is overridden by the github pull request builder plugin
+      - string:
+          name: DEPLOY_MAAS
+          default: "{DEPLOY_MAAS}"
+          description: "Deploy Maas? yes/no"
+      - text:
+          name: USER_VARS
+          default: "{USER_VARS}"
+          description: "OSA/RPC USER_VARS to inject for this build"
     properties:
       # Pass JJB macro vars into the job env
       - inject:
@@ -231,13 +241,11 @@
             TEMPEST_TESTS={TEMPEST_TESTS}
             DEPLOY_CEPH={DEPLOY_CEPH}
             DEPLOY_SWIFT={DEPLOY_SWIFT}
-            USER_VARS={USER_VARS}
             UPGRADE={UPGRADE}
             UPGRADE_FROM_REF={UPGRADE_FROM_REF}
             UPGRADE_FROM_NEAREST_TAG={UPGRADE_FROM_NEAREST_TAG}
             UPGRADE_TYPE={UPGRADE_TYPE}
             UBUNTU_REPO={UBUNTU_REPO}
-            DEPLOY_MAAS={DEPLOY_MAAS}
             JENKINS_RPC_REPO={JENKINS_RPC_REPO}
             JENKINS_RPC_BRANCH={JENKINS_RPC_BRANCH}
             BUILD_SCRIPT_PATH={BUILD_SCRIPT_PATH}
