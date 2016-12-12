@@ -293,6 +293,10 @@
     triggers:
       - timed: "{CRON}"
       - github-pull-request:
+          admin-list:
+            - alextricity25
+            - mattt416
+            - hughsaunders
           org-list:
             - rcbops
           github-hooks: true
@@ -612,6 +616,10 @@
           name: origin
     triggers:
       - github-pull-request:
+          admin-list:
+            - alextricity25
+            - mattt416
+            - hughsaunders
           org-list:
             - rcbops
           github-hooks: true
