@@ -147,7 +147,7 @@
     UPGRADE_FROM_NEAREST_TAG: "yes"
     UPGRADE_TYPE: "major"
     UBUNTU_REPO: "http://mirror.rackspace.com/ubuntu"
-    DEPLOY_MAAS: "no"
+    DEPLOY_MAAS: "yes"
     JENKINS_RPC_REPO: "https://github.com/rcbops/jenkins-rpc"
     JENKINS_RPC_BRANCH: "master"
     BUILD_SCRIPT_PATH: "scripts/aio_build_script.sh"
