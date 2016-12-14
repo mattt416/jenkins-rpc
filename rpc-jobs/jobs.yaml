@@ -55,6 +55,7 @@
       - master:
           branch: master
           branches: "master"
+          USER_VARS: "maas_use_api: false"
     context:
       - swift
       - ceph:
@@ -84,6 +85,16 @@
           branches: "mitaka-13\\.[^0].*"
           UPGRADE: "yes"
           UPGRADE_FROM_REF: "origin/liberty-12.2"
+
+- project:
+    name: 'JJB-AIO-MAAS-Job'
+    jobs:
+      - 'JJB-RPC-AIO_{series}-{context}':
+          series: master
+          branch: master
+          branches: "do_not_build_on_pr"
+          context: periodic_maas
+          CRON: "H H * * *"
 
 - project:
     name: 'JJB-AIO-Test-Jobs'
