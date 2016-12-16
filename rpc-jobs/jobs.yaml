@@ -28,19 +28,19 @@
     parameters:
       - string:
           name: ghprbActualCommit
-          default: " "
+          default: ""
       - string:
           name: ghprbAuthorRepoGitUrl
-          default: " "
+          default: ""
       - string:
           name: ghprbGhRepository
-          default: " "
+          default: ""
       - string:
           name: ghprbSourceBranch
-          default: " "
+          default: ""
       - string:
           name: GIT_BRANCH
-          default: " "
+          default: ""
 
 
 - project:
@@ -167,6 +167,7 @@
     REPO_HOST: "23.253.158.148"
     REPO_USER: "root"
     CRON: "H */6 * * *"
+    KEEP_INSTANCE: "no"
 
     name: 'JJB-RPC-AIO_{series}-{context}'
     project-type: freestyle
@@ -290,6 +291,13 @@
           name: OA_BRANCH
           default: "{OA_BRANCH}"
           description: "Openstack Ansible Branch - can be used to override the RPC OSA submodule"
+      - string:
+          name: KEEP_INSTANCE
+          default: "{KEEP_INSTANCE}"
+          description: |
+            When set to no, instance is deleted at the end of the job.
+            Set to yes to prevent cleanup, for debug etc. Instance may still
+            get cleaned up by another cleanup job.
     properties:
       - rpc-openstack-github
     triggers:
@@ -478,7 +486,7 @@
     triggers:
       - github # triggered post merge, not on PR
     builders:
-      - shell: scripts/run_jjb.sh
+      - shell: scripts/run_jjb.sh update
 
 
 - job:
