@@ -28,14 +28,19 @@
     parameters:
       - string:
           name: ghprbActualCommit
+          default: " "
       - string:
           name: ghprbAuthorRepoGitUrl
+          default: " "
       - string:
           name: ghprbGhRepository
+          default: " "
       - string:
           name: ghprbSourceBranch
+          default: " "
       - string:
           name: GIT_BRANCH
+          default: " "
 
 
 - project:
@@ -100,13 +105,13 @@
     name: 'JJB-AIO-Test-Jobs'
     jobs:
       - 'JJB-RPC-AIO_{series}-{context}':
-          series: master
-          branch: master
+          series: mitaka-13.1
+          branch: mitaka-13.1
           branches: "do_not_build_on_pr"
           context: cidev
-          CRON: ""
           DEPLOY_MAAS: "no"
           USER_VARS: "maas_use_api: false"
+          JENKINS_RPC_BRANCH: "bug/353"
 
 - project:
     name: 'JJB-Misc-Jobs'
@@ -152,6 +157,7 @@
     TEMPEST_TESTS: "scenario heat_api cinder_backup defcore"
     DEPLOY_CEPH: "no"
     DEPLOY_SWIFT: "yes"
+    DEPLOY_MAAS: "yes"
     USER_VARS: ""
     UPGRADE: "no"
     UPGRADE_FROM_REF: "origin/kilo"
@@ -175,7 +181,7 @@
 
     name: 'JJB-RPC-AIO_{series}-{context}'
     project-type: freestyle
-    node: rpcaio
+    node: master
     defaults: global
     disabled: false
     concurrent: true
@@ -216,10 +222,6 @@
               </operationList>
             </hudson.plugins.build__timeout.BuildTimeoutWrapper>
 
-      # Ensure slaves are discarded after use
-      - raw:
-          xml: |
-            <jenkins.plugins.jclouds.compute.JCloudsOneOffSlave plugin="jclouds-jenkins@2.8.1-1"/>
     parameters:
       - pr-params
       - string:
@@ -326,135 +328,26 @@
           name: origin
     builders:
       - shell: |
-          #!/usr/bin/sudo -E /bin/bash
-
-          # Shell Options
-          set -x
-          set +e
-          set -u
-
-          # Functions
-          skip_if_doc_only(){{
-            # Skip build if only doc changes are detected.
-            # Doc changes should only be skipped in PR jobs, not periodics.
-
-            # remove origin/ from sha1 if it is alredy prepended.
-            sha1="${{sha1#origin/}}"
-            if [[ "${{ROOT_BUILD_CAUSE}}" != "TIMERTRIGGER" ]]; then
-              # long stat widths specified to ensure paths aren't truncated
-              git show --stat=400,400 origin/$sha1 \
-                  |awk '/\|/{{print $1}}' \
-                  |egrep -v -e '.*md$' -e '.*rst$' -e '^releasenotes/' \
-                  || {{ echo "Skipping AIO build as no non-doc changes were detected"
-                      prep_artefacts
-                      exit 0
-              }}
-            fi
-          }}
-
-          deploy_rpc(){{
-            # Single use slave requires clone each time
-            git clone $JENKINS_RPC_REPO buildscript_repo
-            pushd buildscript_repo
+          #!/usr/bin/sudo -E /bin/bash -xeu
+          git clone $JENKINS_RPC_REPO buildscript_repo
+          pushd buildscript_repo
             git fetch origin "+refs/pull/*:refs/remotes/origin/pr/*"
             git checkout $JENKINS_RPC_BRANCH
-            popd
-            ./buildscript_repo/$BUILD_SCRIPT_PATH
-          }}
-
-          # Main
-          skip_if_doc_only
-          deploy_rpc
+            git reset --hard origin/$JENKINS_RPC_BRANCH
+            . scripts/gating_bash_lib.sh
+            managed_aio
     publishers:
       # archive artifacts - these are files (logs) that are transferred to the
       # jenkins master and are available after the build has completed
       - postbuildscript:
           script-only-if-succeeded: false
           builders:
-             - shell: |
+            - shell: |
                 #!/usr/bin/sudo -E /bin/bash
-
-                # Shell Options
-                set +x
-                set +e
-                set -u
-                prep_artefacts(){{
-                  echo "****** Copy Logs To Jenkins Workspace For Archival *******"
-
-                  # Copy logs into jenkins workspace so they can be archived with the results
-                  mkdir -p archive
-                  cp -rL /openstack/log archive/openstack
-                  cp -rL /var/log archive/local
-
-                  # Copy horizon error.log files into jenkins archive
-                  find /var/lib/lxc/*horizon*/rootfs/var/log/apache2 -name error.log \
-                    |while read log; do \
-                    container=$(cut -d/ -f 5 <<<$log); \
-                    cp $log archive/openstack/$container; done
-
-                  # Collect openstack etc dirs from containers
-                  find /var/lib/lxc/*/rootfs/etc/ -name policy.json -o -name swift.conf \
-                    |while read policy; do \
-                    src=$(dirname $policy); \
-                    service=$(basename $src); \
-                    container=$(cut -d/ -f 5 <<<$src); \
-                    mkdir -p archive/etc/$container/; cp -r $src/ archive/etc/$container/;  done
-
-                  # Collect ceph configurations from containers.
-                  # Note: On jobs where ceph is not deployed, the following
-                  #       directory will be empty.
-                  find /var/lib/lxc/*/rootfs/etc/ceph/ceph.conf \
-                    |while read ceph_config; do \
-                    container=$(cut -d/ -f 5 <<<$ceph_config); \
-                    mkdir -p archive/etc/$container/; cp $ceph_config archive/etc/$container/; done
-
-                  # Collect ceph configurations from host.
-                  # Note: On jobs where ceph is not deployed, the following
-                  #       directory will be empty.
-                  if [ -f /etc/ceph/ceph.conf ]; then
-                    cp /etc/ceph/ceph.conf archive/etc/
-                  fi
-
-                  # Collect openstack etc dirs from host
-                  find /etc -name policy.json -o -name swift.conf\
-                    |while read policy; do \
-                    src=$(dirname $policy); \
-                    mkdir -p archive/etc; cp -r $src/ archive/etc/;  done
-
-                  # Collect Rabbit, Mysql & Memcached configs
-                  # Copy from all containers to one dir, don't care that it will get overridden
-                  # should be the same anyway.
-                  cp -r /var/lib/lxc/*rabbit*/rootfs/etc/rabbitmq archive/etc/
-                  cp -r /var/lib/lxc/*galera*/rootfs/etc/mysql archive/etc/
-                  cp -r /var/lib/lxc/*memcached*/rootfs/etc/memcached.conf archive/etc/
-
-                  # Collect MAAS agent config
-                  cp -r /etc/rackspace-monitoring-agent.conf.d archive/etc/
-                  cp /etc/rackspace-monitoring-agent.cfg archive/etc/
-
-                  # Jenkins user must be able to read all files to archive and transfer to
-                  # the master. Unreadable files will cause the whole archive operation to fail
-                  chown -R jenkins archive
-
-                  # Remove dangling/circular symlinks
-                  find archive -type l -exec test ! -e {{}} \; -delete
-
-                  # Delete anything that isn't a file or directory - pipes, specials etc
-                  find archive ! -type d  ! -type f -delete
-
-                  # Delete anything not readable by the jenkins user
-                  find archive \
-                    |while read f; \
-                    do sudo -u jenkins [ -r $f ] || {{ echo $f; rm -rf $f; }}; done
-
-                  # Delete anything over 1GB. This is to prevent suspiciously large
-                  # logs from filling up the artefact store.
-                  find . -size +1G -delete
-
-                  # Don't return non-zero, ever.
-                  :
-                }}
-                prep_artefacts
+                pushd buildscript_repo
+                  . scripts/gating_bash_lib.sh
+                  managed_cleanup
+                popd
       - postbuildscript:
           script-only-if-succeeded: true
           builders:
@@ -545,7 +438,7 @@
 
                rm $key
       - archive:
-          artifacts: "archive/**/*"
+          artifacts: "archive*/**/*"
           allow-empty: true
       # Publish tempest results to the Jenkins UI
       - junit:
@@ -727,5 +620,128 @@
       - junit:
           results: "artifacts/*.xml"
           allow-empty-results: true
+- job:
+    name: JJB-Upgrade-Matrix
+    project-type: workflow
+    concurrent: true
+    parameters:
+      - string:
+          name: KEEP_INSTANCE
+          default: "no"
+          description: |
+            When set to no, instance is deleted at the end of the job.
+            Set to yes to prevent cleanup, for debug etc. Instance may still
+            get cleaned up by another cleanup job.
+      - string:
+          name: JENKINS_RPC_REPO
+          default: "http://github.com/rcbops/jenkins-rpc"
+          description: |
+            Repo to pull build scripts from
+      - string:
+          name: JENKINS_RPC_BRANCH
+          default: "master"
+          description: |
+            Branch of JENKINS_RPC to checkout.
 
+    wrappers:
+      - ansicolor
+    dsl: |
+      def upgrade_paths = [:]
+      // for some reason https://issues.jenkins-ci.org/browse/JENKINS-26481
+      // defining the closure outside of a method doesnt seem to work.
+      def make_step(path){
+          return { per_path_block(path) }
+      }
 
+      // this method is called for each upgrade path in parallel
+      def per_path_block(path){
+        timestamps {
+          timeout(time: 6, unit: 'HOURS'){
+            node('master'){
+              deleteDir()
+              stage(path['repr']){
+                echo "---From: ${path['from_name']}/${path['from_sha']}  To: ${path['to_name']}/${path['to_sha']}---"
+                withCredentials([
+                      [$class: 'StringBinding',
+                      credentialsId: '281f38e2-a060-4188-9971-b6bb5e600ef3',
+                      variable: 'rackspace_cloud_api_key'],
+                      [$class: 'StringBinding',
+                      credentialsId: '372ebb8f-4614-492b-9812-62c560393b90',
+                      variable: 'rackspace_cloud_auth_url'],
+                      [$class: 'StringBinding',
+                      credentialsId: '056d4a4a-57b2-4303-8c6e-3bb77631c8b4',
+                      variable: 'rackspace_cloud_password'],
+                      [$class: 'StringBinding',
+                      credentialsId: 'fabf7ee4-246a-4be5-a996-01d2ae70cd18',
+                      variable: 'rackspace_cloud_tenant_id'],
+                      [$class: 'StringBinding',
+                      credentialsId: 'e1b379ac-e090-4b4e-96d5-0f0c0cc272d9',
+                      variable: 'rackspace_cloud_username']]) {
+                  withEnv(["UPGRADE=yes",
+                            "sha1=${path['to_sha']}",
+                            "ghprbActualCommit=${path['to_sha']}",
+                            "UPGRADE_FROM_REF=${path['from_sha']}",
+                            "UPGRADE_FROM_NEAREST_TAG=no",
+                            "UPGRADE_TYPE=${path['type']}",
+                            "DEPLOY_MAAS=yes",
+                            "UBUNTU_REPO=http://mirror.rackspace.com/ubuntu",
+                            "ROOT_BUILD_CAUSE=${currentBuild.build().getAction(CauseAction.class).getShortDescription()}",
+                            "WORKSPACE=${pwd()}",
+                            "KEEP_INSTANCE=${KEEP_INSTANCE}",
+                            "TEMPEST_TESTS='scenario defcore'",
+                            "UPGRADE_PATH=${path['generic']}",
+                            "JENKINS_RPC_REPO=${JENKINS_RPC_REPO}",
+                            "JENKINS_RPC_BRANCH=${JENKINS_RPC_BRANCH}"]) {
+                      // variables inserted by jenkins that are also used
+                      // JOB_NAME, BUILD_ID
+                      // variables that could be used but aren't currently passed'
+                      // USER_VARS, UPGRADE, ghprbTargetBranch, ghprbAuthorRepoGitUrl,
+                      // OA_REPO, GET_PIP
+                      git branch: "${JENKINS_RPC_BRANCH}", credentialsId: '3f643924-58f9-4c55-9fc0-b16049a108d2', url: 'http://github.com/rcbops/jenkins-rpc'
+                      // git fetch origin "+refs/pull/*:refs/remotes/origin/pr/*"
+                      wrap([$class: 'AnsiColorBuildWrapper']) {
+                        catchError {
+                          sh '#!/bin/bash\n . scripts/gating_bash_lib.sh; managed_aio'
+                        }
+                        catchError {
+                          sh '#!/bin/bash\n . scripts/gating_bash_lib.sh; managed_cleanup'
+                        }
+                      } // ansicolor
+                      archiveArtifacts allowEmptyArchive: true, artifacts: 'archive*/**/*', excludes: null
+                  } // withenv
+                } // withcreds
+              } // stage
+            } // node
+          } // timeout
+        } // timestamps
+      } // per_path_block
+
+      // determine the applicable upgrade paths
+      node('master'){
+          deleteDir()
+          stage('calculate paths'){
+              withEnv(['RPC_REPO=https://github.com/rcbops/rpc-openstack']){
+                  git branch: "${JENKINS_RPC_BRANCH}", credentialsId: '3f643924-58f9-4c55-9fc0-b16049a108d2', url: "${JENKINS_RPC_REPO}"
+                  sh 'ln -s . jenkins-rpc; scripts/dev-aio-upgrade/upgrade-parent-job.sh; cat upgrade.properties'
+                  def paths_string = readFile('upgrade.properties')
+                  def paths_list = paths_string.replaceFirst('UPGRADE_PATHS=','').split()
+                  // c-style loop to avoid unserializable iterator
+                  for (int i = 0; i < paths_list.size(); i++){
+                  //for (int i = 0; i < 1; i++){
+                      def path = [:]
+                      def path_string = paths_list[i]
+                      def path_list = path_string.split('_')
+                      path['type'] = path_list[0]
+                      path['from_name'] = path_list[1]
+                      path['to_name'] = path_list[2]
+                      path['from_sha'] = path_list[3]
+                      path['to_sha'] = path_list[4]
+                      path['generic'] = path_list[5]
+                      path['repr'] = path_string
+                      upgrade_paths[path_string]=make_step(path)
+                  }
+              }
+          }
+      }
+
+      parallel upgrade_paths

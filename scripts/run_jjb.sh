@@ -12,12 +12,18 @@ set -u
 
 pushd rpc-jobs
 
+# get operation
 OPERATION=${1:-update}
+shift
+
+# any remaining paramters are specific jobs to update, if none are specified
+# all jobs will be updated
 
 # Execute JJB
 jenkins-jobs \
   --conf jenkins_jobs.ini \
   --password $JENKINS_API_KEY \
   $OPERATION \
-  jobs.yaml
+  jobs.yaml \
+  $@
 
