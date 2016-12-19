@@ -99,6 +99,7 @@
           branch: master
           branches: "do_not_build_on_pr"
           context: periodic_maas
+          DEPLOY_MAAS: "yes"
           CRON: "H H * * *"
 
 - project:
@@ -157,7 +158,7 @@
     TEMPEST_TESTS: "scenario heat_api cinder_backup defcore"
     DEPLOY_CEPH: "no"
     DEPLOY_SWIFT: "yes"
-    DEPLOY_MAAS: "yes"
+    DEPLOY_MAAS: "no"
     USER_VARS: ""
     UPGRADE: "no"
     UPGRADE_FROM_REF: "origin/kilo"
