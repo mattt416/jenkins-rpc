@@ -14,7 +14,7 @@ pushd rpc-jobs
 
 # get operation
 OPERATION=${1:-update}
-shift
+[[ $# -gt 0 ]] && shift
 
 # any remaining paramters are specific jobs to update, if none are specified
 # all jobs will be updated
