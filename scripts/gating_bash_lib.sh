@@ -83,8 +83,8 @@ managed_aio(){
   short_job_name=$(awk -F'[-_]' '{ORS=""
                                  for(i=1; i<=NF; i++) c[i]=substr($i, 0, 1)}
                                  END{for(i=1; i<=length(c); i++)
-                                 {print c[i] }}' <<<$JOB_NAME)
-  get_instance "${short_job_name}_${BUILD_ID}"
+                                 {print tolower(c[i]) }}' <<<$JOB_NAME)
+  get_instance "${short_job_name}-${BUILD_ID}"
   on_remote clone_rpc "$sha1"
   on_remote aio
   deploy_result=$?
@@ -473,7 +473,7 @@ openrc_from_maas_vars(){
 
 get_instance(){
   . /opt/jenkins/venvs/osclients/bin/activate
-  instance_name="${1}_${RANDOM}"
+  instance_name="${1}-${RANDOM}"
   echo "Booting Instance: $instance_name" >&2
   flavor="performance2-15"
   image="$(get_image 'Ubuntu 14.04 LTS')"
