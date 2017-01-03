@@ -610,7 +610,7 @@
             credential-id: rpcorchestration_tenant_name
             variable: rpcorchestration_tenant_name
       - timeout:
-          timeout: 240
+          timeout: 360
           fail: True
     scm:
       - git:
@@ -621,6 +621,11 @@
         - shell: |
             jenkins/build.sh
     publishers:
+      - postbuildscript:
+          script-only-if-succeeded: false
+          builders:
+            - shell: |
+                jenkins/cleanup.sh ||:
       - archive:
           artifacts: "artifacts/**"
           allow-empty: true
