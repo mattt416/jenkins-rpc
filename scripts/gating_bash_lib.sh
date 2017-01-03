@@ -551,6 +551,7 @@ on_remote(){
     TEMPEST_TESTS
     JENKINS_RPC_REPO
     JENKINS_RPC_BRANCH
+    USER_VARS
     rackspace_cloud_api_key
     rackspace_cloud_auth_url
     rackspace_cloud_password

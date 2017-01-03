@@ -60,7 +60,6 @@
       - master:
           branch: master
           branches: "master"
-          USER_VARS: "maas_use_api: false"
     context:
       - swift
       - ceph:
