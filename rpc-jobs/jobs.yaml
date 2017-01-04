@@ -57,6 +57,7 @@
       - mitaka:
           branch: mitaka-13.1
           branches: "mitaka-.*"
+          UPGRADE_FROM_REF: "origin/liberty-12.2"
       - master:
           branch: master
           branches: "master"
@@ -70,45 +71,34 @@
                     default_volume_type: ceph
             cinder_service_backup_driver: cinder.backup.drivers.ceph
             cinder_service_backup_program_enabled: true
-    jobs:
-      - 'JJB-RPC-AIO_{series}-{context}'
-
-- project:
-    name: 'JJB-AIO-Upgrades'
-    jobs:
-      - 'JJB-RPC-AIO_{series}-{context}':
-          series: liberty
-          branch: "liberty-12.2"
-          context: upgrade
-          branches: "liberty-.*"
+      - upgrade:
           UPGRADE: "yes"
-      - 'JJB-RPC-AIO_{series}-{context}':
-          series: mitaka
-          branch: "mitaka-13.1"
-          context: upgrade
-          branches: "mitaka-13\\.[^0].*"
-          UPGRADE: "yes"
-          UPGRADE_FROM_REF: "origin/liberty-12.2"
-
-- project:
-    name: 'JJB-AIO-MAAS-Job'
-    jobs:
-      - 'JJB-RPC-AIO_{series}-{context}':
-          series: master
-          branch: master
+    # NOTE: Hugh tested this and found that ztrigger overrides series and
+    #       trigger doesn't, which is odd because both trigger and ztrigger
+    #       sort after series.
+    ztrigger:
+      - pr:
+          CRON: ""
+          DEPLOY_MAAS: "no"
+      - periodic:
           branches: "do_not_build_on_pr"
-          context: periodic_maas
-          DEPLOY_MAAS: "yes"
-          CRON: "H H * * *"
+    exclude:
+      - series: kilo
+        context: upgrade
+      - series: master
+        context: upgrade
+    jobs:
+      - 'JJB-RPC-AIO_{series}-{context}-{ztrigger}'
 
 - project:
     name: 'JJB-AIO-Test-Jobs'
     jobs:
-      - 'JJB-RPC-AIO_{series}-{context}':
+      - 'JJB-RPC-AIO_{series}-{context}-{ztrigger}':
           series: mitaka-13.1
           branch: mitaka-13.1
           branches: "do_not_build_on_pr"
           context: cidev
+          ztrigger: ondemand
           DEPLOY_MAAS: "no"
           USER_VARS: "maas_use_api: false"
           JENKINS_RPC_BRANCH: "bug/353"
@@ -157,7 +147,7 @@
     TEMPEST_TESTS: "scenario heat_api cinder_backup defcore"
     DEPLOY_CEPH: "no"
     DEPLOY_SWIFT: "yes"
-    DEPLOY_MAAS: "no"
+    DEPLOY_MAAS: "yes"
     USER_VARS: ""
     UPGRADE: "no"
     UPGRADE_FROM_REF: "origin/kilo"
@@ -179,7 +169,7 @@
     CRON: "H */6 * * *"
     KEEP_INSTANCE: "no"
 
-    name: 'JJB-RPC-AIO_{series}-{context}'
+    name: 'JJB-RPC-AIO_{series}-{context}-{ztrigger}'
     project-type: freestyle
     node: master
     defaults: global
