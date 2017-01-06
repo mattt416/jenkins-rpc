@@ -622,6 +622,89 @@
       - junit:
           results: "artifacts/*.xml"
           allow-empty-results: true
+
+- job:
+    name: JJB-apt-artifacts
+    node: master
+    concurrent: true
+    build-discarder:
+      daysToKeep: 30
+    triggers:
+      - timed: "H 4 * * *"
+    parameters:
+    # - pr-params
+    # - string:
+    #     name: ghprbTargetBranch
+    #     default: "{branch}"
+    #     description: |
+    #       Target branch - the branch to be tested (sha1 param) will
+    #       be rebased against this. Also overridden by github pull request builder plugin.
+      - string:
+          name: RPC_ARTIFACTS
+          default: "https://github.com/rcbops/rpc-artifacts.git"
+          description: "RPC-Artifacts Repo"
+      - string:
+          name: RPC_ARTIFACTS_BRANCH
+          default: "master"
+          description: "RPC-Artifacts Branch"
+      - string:
+          name: REPO_HOST
+          default: "23.253.158.148"
+          description: "Host that will hold the apt repositories"
+      - string:
+          name: REPO_USER
+          default: "root"
+          description: "User for the connection to the repo host and sync repos there"
+      - string:
+          name: ANSIBLE_DEBUG
+          default: "0"
+          description: "Enables/disables the ansible debug log"
+      - string:
+          name: ANSIBLE_VERBOSITY
+          default: "-v"
+          description: "Change the verbosity level of ansible playbook runs"
+    wrappers:
+      - ansicolor
+      - timestamps
+      - credentials-binding:
+        - text:
+            credential-id: RPC_REPO_KEY
+            variable: REPO_KEY
+        - text:
+            credential-id: REPO_GPG_SECRET_FILE
+            variable: REPO_GPG_PRIVATE
+        - text:
+            credential-id: REPO_GPG_PUBLIC_FILE
+            variable: REPO_GPG_PUBLIC
+      - timeout:
+          timeout: 360
+          fail: True
+    scm:
+      - git:
+          url: "${RPC_ARTIFACTS}"
+          branches:
+            - "${RPC_ARTIFACTS_BRANCH}"
+    builders:
+      - shell: |
+          #!/bin/bash
+          #git clone ${RPC_ARTIFACTS} rpc-artifacts
+          #cd rpc-artifacts
+          set +x
+          mkdir -p ~/.ssh/
+          cat $RPC_REPO_KEY > ~/.ssh/repo.key
+          cat $REPO_GPG_PRIVATE > /openstack/aptly.private.key
+          cat $REPO_GPG_PUBLIC > /openstack/aptly.public.key
+          set -x
+          apt-get update
+          xargs apt-get install -y < bindep.txt
+          curl https://bootstrap.pypa.io/get-pip.py | python
+          pip install ansible==2.2
+          #Append host to [mirrors] group
+          echo "repo ansible_host=${REPO_HOST} ansible_user=${REPO_USER} ansible_ssh_private_key_file=~/.ssh/repo.key " >> inventory
+          ansible-playbook aptly-pre-install.yml ${ANSIBLE_VERBOSITY}
+          ansible-playbook aptly-all.yml -i inventory ${ANSIBLE_VERBOSITY}
+          ls -R /openstack/
+
 - job:
     name: JJB-Upgrade-Matrix
     project-type: workflow
