@@ -639,14 +639,14 @@
     #     description: |
     #       Target branch - the branch to be tested (sha1 param) will
     #       be rebased against this. Also overridden by github pull request builder plugin.
-      - string:
-          name: RPC_ARTIFACTS
-          default: "https://github.com/rcbops/rpc-artifacts.git"
-          description: "RPC-Artifacts Repo"
-      - string:
-          name: RPC_ARTIFACTS_BRANCH
-          default: "master"
-          description: "RPC-Artifacts Branch"
+    # - string:
+    #     name: RPC_ARTIFACTS
+    #     default: "https://github.com/rcbops/rpc-artifacts.git"
+    #     description: "RPC-Artifacts Repo"
+    # - string:
+    #     name: RPC_ARTIFACTS_BRANCH
+    #     default: "master"
+    #     description: "RPC-Artifacts Branch"
       - string:
           name: REPO_HOST
           default: "23.253.158.148"
@@ -667,13 +667,13 @@
       - ansicolor
       - timestamps
       - credentials-binding:
-        - text:
-            credential-id: RPC_REPO_KEY
+        - file:
+            credential-id: REPO_SSH_SECRET_FILE
             variable: REPO_KEY
-        - text:
+        - file:
             credential-id: REPO_GPG_SECRET_FILE
             variable: REPO_GPG_PRIVATE
-        - text:
+        - file:
             credential-id: REPO_GPG_PUBLIC_FILE
             variable: REPO_GPG_PUBLIC
       - timeout:
