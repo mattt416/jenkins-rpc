@@ -668,7 +668,7 @@
       - timestamps
       - credentials-binding:
         - file:
-            credential-id: REPO_SSH_SECRET_FILE
+            credential-id: RPC_REPO_KEY_FILE
             variable: REPO_KEY
         - file:
             credential-id: REPO_GPG_SECRET_FILE
