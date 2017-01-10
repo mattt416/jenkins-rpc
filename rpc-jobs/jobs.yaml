@@ -632,21 +632,21 @@
     triggers:
       - timed: "H 4 * * *"
     parameters:
-    # - pr-params
-    # - string:
-    #     name: ghprbTargetBranch
-    #     default: "{branch}"
-    #     description: |
-    #       Target branch - the branch to be tested (sha1 param) will
-    #       be rebased against this. Also overridden by github pull request builder plugin.
-    # - string:
-    #     name: RPC_ARTIFACTS
-    #     default: "https://github.com/rcbops/rpc-artifacts.git"
-    #     description: "RPC-Artifacts Repo"
-    # - string:
-    #     name: RPC_ARTIFACTS_BRANCH
-    #     default: "master"
-    #     description: "RPC-Artifacts Branch"
+      - pr-params
+      - string:
+          name: ghprbTargetBranch
+          default: "{branch}"
+          description: |
+            Target branch - the branch to be tested (sha1 param) will
+            be rebased against this. Also overridden by github pull request builder plugin.
+      - string:
+          name: RPC_ARTIFACTS
+          default: "https://github.com/rcbops/rpc-artifacts.git"
+          description: "RPC-Artifacts Repo"
+      - string:
+          name: RPC_ARTIFACTS_BRANCH
+          default: "master"
+          description: "RPC-Artifacts Branch"
       - string:
           name: REPO_HOST
           default: "23.253.158.148"
