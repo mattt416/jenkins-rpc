@@ -648,14 +648,6 @@
           default: "master"
           description: "RPC-Artifacts Branch"
       - string:
-          name: REPO_HOST
-          default: "23.253.158.148"
-          description: "Host that will hold the apt repositories"
-      - string:
-          name: REPO_USER
-          default: "root"
-          description: "User for the connection to the repo host and sync repos there"
-      - string:
           name: ANSIBLE_DEBUG
           default: "0"
           description: "Enables/disables the ansible debug log"
@@ -667,15 +659,24 @@
       - ansicolor
       - timestamps
       - credentials-binding:
+        - text:
+            credential-id: RPC_REPO_IP
+            variable: REPO_HOST
+        - text:
+            credential-id: RPC_REPO_SSH_USERNAME_TEXT
+            variable: REPO_USER
         - file:
-            credential-id: RPC_REPO_KEY_FILE
-            variable: REPO_KEY
+            credential-id: RPC_REPO_SSH_USER_PRIVATE_KEY_FILE
+            variable: REPO_USER_KEY
         - file:
-            credential-id: REPO_GPG_SECRET_FILE
-            variable: REPO_GPG_PRIVATE
+            credential-id: RPC_REPO_GPG_PUBLIC_KEY_FILE
+            variable: REPO_HOST_PUBKEY
         - file:
-            credential-id: REPO_GPG_PUBLIC_FILE
-            variable: REPO_GPG_PUBLIC
+            credential-id: RPC_REPO_GPG_SECRET_KEY_FILE
+            variable: GPG_PRIVATE
+        - file:
+            credential-id: RPC_REPO_GPG_PUBLIC_KEY_FILE
+            variable: GPG_PUBLIC
       - timeout:
           timeout: 360
           fail: True
@@ -689,18 +690,19 @@
           #!/bin/bash
           #git clone ${RPC_ARTIFACTS} rpc-artifacts
           #cd rpc-artifacts
-          set +x
           mkdir -p ~/.ssh/
-          cat $RPC_REPO_KEY > ~/.ssh/repo.key
-          cat $REPO_GPG_PRIVATE > /openstack/aptly.private.key
-          cat $REPO_GPG_PUBLIC > /openstack/aptly.public.key
+          grep "${REPO_HOST}" ~/.ssh/known_hosts || echo "${REPO_HOST} ${REPO_HOST_PUBKEY}" >> ~/.ssh/known_hosts
+          set +x
+          cat $REPO_USER_KEY > ~/.ssh/repo.key
+          cat $GPG_PRIVATE > /openstack/aptly.private.key
+          cat $GPG_PUBLIC > /openstack/aptly.public.key
           set -x
           apt-get update
           xargs apt-get install -y < bindep.txt
           curl https://bootstrap.pypa.io/get-pip.py | python
           pip install ansible==2.2
           #Append host to [mirrors] group
-          echo "repo ansible_host=${REPO_HOST} ansible_user=${REPO_USER} ansible_ssh_private_key_file=~/.ssh/repo.key " >> inventory
+          echo "repo ansible_host=${REPO_HOST} ansible_user=${REPO_USER} ansible_ssh_private_key_file='~/.ssh/repo.key' " >> inventory
           ansible-playbook aptly-pre-install.yml ${ANSIBLE_VERBOSITY}
           ansible-playbook aptly-all.yml -i inventory ${ANSIBLE_VERBOSITY}
           ls -R /openstack/
