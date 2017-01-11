@@ -3,18 +3,11 @@
 - hosts: galera
   user: root
   vars:
+    rpc_release: "{{ lookup('pipe', 'cd /opt/rpc-openstack && git describe --tags --abbrev=0') }}"
     holland_venv_bin: "/openstack/venvs/holland-{{ rpc_release }}/bin"
   tasks:
-    - name: Discover rpc-openstack version
-      git_repo_info:
-        path: "/opt/rpc-openstack"
-      delegate_to: localhost
-      run_once: true
-      tags:
-        - rpc-release
-    
     - name: Test for holland venv
-      stat: 
+      stat:
         path: "{{ holland_venv_bin }}"
       register: holland_venv
 
