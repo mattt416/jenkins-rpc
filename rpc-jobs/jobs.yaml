@@ -691,12 +691,13 @@
           #git clone ${RPC_ARTIFACTS} rpc-artifacts
           #cd rpc-artifacts
           mkdir -p ~/.ssh/
-          grep "${REPO_HOST}" ~/.ssh/known_hosts || echo "${REPO_HOST} ${REPO_HOST_PUBKEY}" >> ~/.ssh/known_hosts
           set +x
           cat $REPO_USER_KEY > ~/.ssh/repo.key
+          chmod 600 ~/.ssh/repo.key
           cat $GPG_PRIVATE > /openstack/aptly.private.key
           cat $GPG_PUBLIC > /openstack/aptly.public.key
           set -x
+          grep "${REPO_HOST}" ~/.ssh/known_hosts || echo "${REPO_HOST} ${REPO_HOST_PUBKEY}" >> ~/.ssh/known_hosts
           apt-get update
           xargs apt-get install -y < bindep.txt
           curl https://bootstrap.pypa.io/get-pip.py | python
