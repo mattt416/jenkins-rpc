@@ -1,3 +1,34 @@
+
+# defaults - These must be set as the default value of a jenkins parameter in order to be injected into the build Environment.
+- defaults:
+    name: global
+    RPC_REPO: "https://github.com/rcbops/rpc-openstack"
+    TEMPEST_TESTS: "scenario heat_api cinder_backup defcore"
+    DEPLOY_CEPH: "no"
+    DEPLOY_SWIFT: "yes"
+    DEPLOY_MAAS: "yes"
+    USER_VARS: ""
+    UPGRADE: "no"
+    UPGRADE_FROM_REF: "origin/kilo"
+    UPGRADE_FROM_NEAREST_TAG: "yes"
+    UPGRADE_TYPE: "major"
+    UBUNTU_REPO: "http://mirror.rackspace.com/ubuntu"
+    JENKINS_RPC_REPO: "https://github.com/rcbops/jenkins-rpc"
+    JENKINS_RPC_BRANCH: "master"
+    BUILD_SCRIPT_PATH: "scripts/aio_build_script.sh"
+    # Override the OSA submodule?
+    OA_REPO: "none"
+    OA_BRANCH: ""
+    # branch for periodics to build
+    branch: master
+    # PRs targetting branches that match this pattern will be tested with this job
+    branches: "kilo|liberty-.*|mitaka-.*|master"
+    REPO_HOST: "23.253.158.148"
+    REPO_USER: "root"
+    CRON: "H */6 * * *"
+    KEEP_INSTANCE: "no"
+
+#
 # Macros for repeated blocks
 
 # Define the github project associated with jenkins rpc
@@ -17,11 +48,15 @@
     name: jenkins-rpc-git
     scm:
       - git:
-          url: https://github.com/rcbops/jenkins-rpc
+          url: "$JENKINS_RPC_REPO"
           branches:
-            - master
+            - "$JENKINS_RPC_BRANCH"
           refspec: "+refs/pull/*:refs/remotes/origin/pr/* +refs/heads/*:refs/remotes/origin/*"
           name: origin
+
+# Note: JJB Macros are not expanded in macros, even if that macro is used in a
+# template.  so any parameters that have jjb vars as defaults can't be defined
+# in a macro :(
 
 - parameter:
     name: pr-params
@@ -142,32 +177,6 @@
 #
 
 - job-template:
-    # defaults - These must be set as the default value of a jenkins parameter in order to be injected into the build Environment.
-    RPC_REPO: "https://github.com/rcbops/rpc-openstack"
-    TEMPEST_TESTS: "scenario heat_api cinder_backup defcore"
-    DEPLOY_CEPH: "no"
-    DEPLOY_SWIFT: "yes"
-    DEPLOY_MAAS: "yes"
-    USER_VARS: ""
-    UPGRADE: "no"
-    UPGRADE_FROM_REF: "origin/kilo"
-    UPGRADE_FROM_NEAREST_TAG: "yes"
-    UPGRADE_TYPE: "major"
-    UBUNTU_REPO: "http://mirror.rackspace.com/ubuntu"
-    JENKINS_RPC_REPO: "https://github.com/rcbops/jenkins-rpc"
-    JENKINS_RPC_BRANCH: "master"
-    BUILD_SCRIPT_PATH: "scripts/aio_build_script.sh"
-    # Override the OSA submodule?
-    OA_REPO: "none"
-    OA_BRANCH: ""
-    # branch for periodics to build
-    branch: master
-    # PRs targetting branches that match this pattern will be tested with this job
-    branches: "kilo|liberty-.*|mitaka-.*|master"
-    REPO_HOST: "23.253.158.148"
-    REPO_USER: "root"
-    CRON: "H */6 * * *"
-    KEEP_INSTANCE: "no"
 
     name: 'JJB-RPC-AIO_{series}-{context}-{ztrigger}'
     project-type: freestyle
@@ -214,6 +223,14 @@
 
     parameters:
       - pr-params
+      - string:
+          name: JENKINS_RPC_REPO
+          default: "{JENKINS_RPC_REPO}"
+          description: "Repo url for JENKINS_RPC"
+      - string:
+          name: JENKINS_RPC_BRANCH
+          default: "{JENKINS_RPC_BRANCH}"
+          description: "Branch to checkout for JENKINS_RPC"
       - string:
           name: ghprbTargetBranch
           default: "{branch}"
@@ -272,14 +289,6 @@
           default: "{UBUNTU_REPO}"
           description: "Ubuntu repo to use, currently requires all sections so not compatible with OS infra mirrors"
       - string:
-          name: JENKINS_RPC_REPO
-          default: "{JENKINS_RPC_REPO}"
-          description: "Repo url for JENKINS_RPC"
-      - string:
-          name: JENKINS_RPC_BRANCH
-          default: "{JENKINS_RPC_BRANCH}"
-          description: "Branch to checkout for JENKINS_RPC"
-      - string:
           name: BUILD_SCRIPT_PATH
           default: "{BUILD_SCRIPT_PATH}"
           description: "Path to the build script within JENKINS_RPC_REPO"
@@ -296,8 +305,8 @@
           default: "{KEEP_INSTANCE}"
           description: |
             When set to no, instance is deleted at the end of the job.
-            Set to yes to prevent cleanup, for debug etc. Instance may still
-            get cleaned up by another cleanup job.
+            Set to yes to prevent cleanup, for debug etc. Instance will be
+            removed by the cleanup job after 48 hours.
     properties:
       - rpc-openstack-github
     triggers:
@@ -453,6 +462,15 @@
     node: master
     logrotate:
       numToKeep: 50
+    parameters:
+      - string:
+          name: JENKINS_RPC_REPO
+          default: "{JENKINS_RPC_REPO}"
+          description: "Repo url for JENKINS_RPC"
+      - string:
+          name: JENKINS_RPC_BRANCH
+          default: "{JENKINS_RPC_BRANCH}"
+          description: "Branch to checkout for JENKINS_RPC"
     # NOTE(mattt): Is this property actually required here?
     properties:
       - jenkins-rpc-github
@@ -479,6 +497,15 @@
     node: master
     logrotate:
       daysToKeep: 30
+    parameters:
+      - string:
+          name: JENKINS_RPC_REPO
+          default: "{JENKINS_RPC_REPO}"
+          description: "Repo url for JENKINS_RPC"
+      - string:
+          name: JENKINS_RPC_BRANCH
+          default: "{JENKINS_RPC_BRANCH}"
+          description: "Branch to checkout for JENKINS_RPC"
     properties:
       - jenkins-rpc-github
     scm:
@@ -503,18 +530,21 @@
     parameters:
       - pr-params
       - string:
+          name: JENKINS_RPC_REPO
+          default: "{JENKINS_RPC_REPO}"
+          description: "Repo url for JENKINS_RPC"
+      - string:
+          name: JENKINS_RPC_BRANCH
+          default: "{JENKINS_RPC_BRANCH}"
+          description: "Branch to checkout for JENKINS_RPC"
+      - string:
           name: ghprbTargetBranch
           default: "master"
       - string:
           name: sha1
           default: "master"
     scm:
-      - git:
-          url: https://github.com/rcbops/jenkins-rpc
-          branches:
-            - "${sha1}"
-          refspec: "+refs/pull/*:refs/remotes/origin/pr/* +refs/heads/*:refs/remotes/origin/*"
-          name: origin
+      - jenkins-rpc-git
     triggers:
       - github-pull-request:
           admin-list:
