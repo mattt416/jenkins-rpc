@@ -655,6 +655,10 @@
           name: ANSIBLE_VERBOSITY
           default: "-v"
           description: "Change the verbosity level of ansible playbook runs"
+      - string:
+          name: RPC_ARTIFACTS_FOLDER
+          default: "/var/www/artifacts"
+          description: "Folder to store artifacts (private and public)"
     wrappers:
       - ansicolor
       - timestamps
@@ -694,8 +698,8 @@
           set +x
           cat $REPO_USER_KEY > ~/.ssh/repo.key
           chmod 600 ~/.ssh/repo.key
-          cat $GPG_PRIVATE > /openstack/aptly.private.key
-          cat $GPG_PUBLIC > /openstack/aptly.public.key
+          cat $GPG_PRIVATE > ${RPC_ARTIFACTS_FOLDER}/aptly.private.key
+          cat $GPG_PUBLIC > ${RPC_ARTIFACTS_FOLDER}/aptly.public.key
           set -x
           grep "${REPO_HOST}" ~/.ssh/known_hosts || echo "${REPO_HOST} $(cat $REPO_HOST_PUBKEY)" >> ~/.ssh/known_hosts
           apt-get update
