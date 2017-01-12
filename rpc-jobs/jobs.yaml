@@ -669,7 +669,7 @@
             credential-id: RPC_REPO_SSH_USER_PRIVATE_KEY_FILE
             variable: REPO_USER_KEY
         - file:
-            credential-id: RPC_REPO_GPG_PUBLIC_KEY_FILE
+            credential-id: RPC_REPO_SSH_HOST_PUBLIC_KEY_FILE
             variable: REPO_HOST_PUBKEY
         - file:
             credential-id: RPC_REPO_GPG_SECRET_KEY_FILE
@@ -697,7 +697,7 @@
           cat $GPG_PRIVATE > /openstack/aptly.private.key
           cat $GPG_PUBLIC > /openstack/aptly.public.key
           set -x
-          grep "${REPO_HOST}" ~/.ssh/known_hosts || echo "${REPO_HOST} ${REPO_HOST_PUBKEY}" >> ~/.ssh/known_hosts
+          grep "${REPO_HOST}" ~/.ssh/known_hosts || echo "${REPO_HOST} $(cat $REPO_HOST_PUBKEY)" >> ~/.ssh/known_hosts
           apt-get update
           xargs apt-get install -y < bindep.txt
           curl https://bootstrap.pypa.io/get-pip.py | python
