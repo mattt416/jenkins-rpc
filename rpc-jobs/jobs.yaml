@@ -518,6 +518,7 @@
 
 - job:
     name: JJB-Job-Test
+    defaults: global
     project-type: freestyle
     description: "Test JJB job defintions for syntax"
     disabled: false
