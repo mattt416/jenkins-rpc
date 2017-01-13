@@ -154,25 +154,25 @@ $(document).ready( function () {
       <tr>
         <th></th>
         <th>Master</th>
+        <th>Newton</th>
         <th>Mitaka</th>
         <th>Liberty</th>
-        <th>Kilo</th>
       </tr>
     </thead>
     <tbody>
       <tr>
         <th>Full</th>
         {{ mcell('master_full_periodic') }}
+        {{ mcell('newton_full_periodic') }}
         {{ mcell('mitaka_full_periodic') }}
         {{ mcell('liberty_full_periodic') }}
-        {{ mcell('kilo_full_periodic') }}
       </tr>
       <tr>
         <th>Ceph</th>
         {{ mcell('master_ceph_periodic') }}
+        {{ mcell('newton_full_periodic') }}
         {{ mcell('mitaka_ceph_periodic') }}
         {{ mcell('liberty_ceph_periodic') }}
-        {{ mcell('kilo_ceph_periodic') }}
       </tr>
       <tr>
         <th>Upgrade (from previous major)</th>

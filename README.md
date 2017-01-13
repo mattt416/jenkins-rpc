@@ -25,7 +25,7 @@ Note that some jobs have not yet been migrated to JJB and are defined in Jenkins
 ### Jenkins Jobs
 
 ###### JJB-RPC-AIO-*
-These jobs are all instances of the same JJB [Job Template](https://github.com/rcbops/jenkins-rpc/blob/master/rpc-jobs/jobs.yaml#L98). They are instantiated using a [project](http://docs.openstack.org/infra/jenkins-job-builder/definition.html#project), which is currently a 2x4 matrix (swift,ceph)x(kilo,liberty,mitaka,master). See [JJB-RPC-AIO_master-swift](http://jenkins.propter.net/job/JJB-RPC-AIO_master-swift/) as an example.
+These jobs are all instances of the same JJB [Job Template](https://github.com/rcbops/jenkins-rpc/blob/master/rpc-jobs/jobs.yaml#L98). They are instantiated using a [project](http://docs.openstack.org/infra/jenkins-job-builder/definition.html#project), which is currently a 2x4 matrix (swift,ceph)x(liberty,mitaka,newton,master). See [JJB-RPC-AIO_master-swift](http://jenkins.propter.net/job/JJB-RPC-AIO_master-swift/) as an example.
 
 Each matrix combination provides its axis as variables but can also supply other variables to the job template. these values are used as string substitutions when JJB creates the compiled job configs. These variables are not available at job runtime. In order to pass a JJB template var into the environment of a running job, the env inject plugin is used. Defaults for these values are also supplied in the [first section of the job template](https://github.com/rcbops/jenkins-rpc/blob/master/rpc-jobs/jobs.yaml#L99).
 

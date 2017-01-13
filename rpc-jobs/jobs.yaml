@@ -9,7 +9,7 @@
     DEPLOY_MAAS: "yes"
     USER_VARS: ""
     UPGRADE: "no"
-    UPGRADE_FROM_REF: "origin/kilo"
+    UPGRADE_FROM_REF: "origin/liberty-12.2"
     UPGRADE_FROM_NEAREST_TAG: "yes"
     UPGRADE_TYPE: "major"
     UBUNTU_REPO: "http://mirror.rackspace.com/ubuntu"
@@ -22,7 +22,7 @@
     # branch for periodics to build
     branch: master
     # PRs targetting branches that match this pattern will be tested with this job
-    branches: "kilo|liberty-.*|mitaka-.*|master"
+    branches: "liberty-.*|mitaka-.*|newton-.*|master"
     REPO_HOST: "23.253.158.148"
     REPO_USER: "root"
     CRON: "H */6 * * *"
@@ -83,9 +83,6 @@
     # Note: branch is the branch for periodics to build
     #       branches is the branch pattern to match for PR Jobs.
     series:
-      - kilo:
-          branch: kilo
-          branches: "kilo"
       - liberty:
           branch: liberty-12.2
           branches: "liberty-.*"
@@ -93,6 +90,9 @@
           branch: mitaka-13.1
           branches: "mitaka-.*"
           UPGRADE_FROM_REF: "origin/liberty-12.2"
+      - newton:
+          branch: newton-14.0
+          branches: "newton-.*"
       - master:
           branch: master
           branches: "master"
@@ -118,7 +118,7 @@
       - periodic:
           branches: "do_not_build_on_pr"
     exclude:
-      - series: kilo
+      - series: newton
         context: upgrade
       - series: master
         context: upgrade
