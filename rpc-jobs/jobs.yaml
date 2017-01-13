@@ -500,11 +500,11 @@
     parameters:
       - string:
           name: JENKINS_RPC_REPO
-          default: "{JENKINS_RPC_REPO}"
+          default: "https://github.com/rcbops/jenkins-rpc"
           description: "Repo url for JENKINS_RPC"
       - string:
           name: JENKINS_RPC_BRANCH
-          default: "{JENKINS_RPC_BRANCH}"
+          default: "master"
           description: "Branch to checkout for JENKINS_RPC"
     properties:
       - jenkins-rpc-github
@@ -531,11 +531,11 @@
       - pr-params
       - string:
           name: JENKINS_RPC_REPO
-          default: "{JENKINS_RPC_REPO}"
+          default: "https://github.com/rcbops/jenkins-rpc"
           description: "Repo url for JENKINS_RPC"
       - string:
           name: JENKINS_RPC_BRANCH
-          default: "{JENKINS_RPC_BRANCH}"
+          default: "master"
           description: "Branch to checkout for JENKINS_RPC"
       - string:
           name: ghprbTargetBranch
