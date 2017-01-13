@@ -655,7 +655,7 @@
 
 - job:
     name: JJB-apt-artifacts
-    node: master
+    node: artifcats
     concurrent: true
     build-discarder:
       daysToKeep: 30
