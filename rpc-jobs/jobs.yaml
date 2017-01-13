@@ -722,6 +722,8 @@
     builders:
       - shell: |
           #!/bin/bash
+          set -e
+          set -o pipefail
           #git clone ${RPC_ARTIFACTS} rpc-artifacts
           #cd rpc-artifacts
           mkdir -p ~/.ssh/
