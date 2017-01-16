@@ -27,6 +27,7 @@
     REPO_USER: "root"
     CRON: "H */6 * * *"
     KEEP_INSTANCE: "no"
+    IMAGE: "Ubuntu 14.04 LTS"
 
 #
 # Macros for repeated blocks
@@ -89,7 +90,6 @@
       - mitaka:
           branch: mitaka-13.1
           branches: "mitaka-.*"
-          UPGRADE_FROM_REF: "origin/liberty-12.2"
       - newton:
           branch: newton-14.0
           branches: "newton-.*"
@@ -108,6 +108,9 @@
             cinder_service_backup_program_enabled: true
       - upgrade:
           UPGRADE: "yes"
+      - xenial:
+          IMAGE: "Ubuntu 16.04 LTS"
+
     # NOTE: Hugh tested this and found that ztrigger overrides series and
     #       trigger doesn't, which is odd because both trigger and ztrigger
     #       sort after series.
@@ -118,25 +121,32 @@
       - periodic:
           branches: "do_not_build_on_pr"
     exclude:
+      - series: liberty
+        context: upgrade
       - series: newton
         context: upgrade
       - series: master
         context: upgrade
+
+      # Xenial builds are run for newton and above.
+      - series: liberty
+        context: xenial
+      - series: mitaka
+        context: xenial
     jobs:
       - 'JJB-RPC-AIO_{series}-{context}-{ztrigger}'
 
 - project:
-    name: 'JJB-AIO-Test-Jobs'
+    name: 'JJB-AIO-Experimental-Jobs'
     jobs:
       - 'JJB-RPC-AIO_{series}-{context}-{ztrigger}':
           series: mitaka-13.1
           branch: mitaka-13.1
           branches: "do_not_build_on_pr"
-          context: cidev
+          context: experimental
           ztrigger: ondemand
           DEPLOY_MAAS: "no"
-          USER_VARS: "maas_use_api: false"
-          JENKINS_RPC_BRANCH: "bug/353"
+          CRON: ""
 
 - project:
     name: 'JJB-Misc-Jobs'
@@ -177,7 +187,6 @@
 #
 
 - job-template:
-
     name: 'JJB-RPC-AIO_{series}-{context}-{ztrigger}'
     project-type: freestyle
     node: master
@@ -307,6 +316,10 @@
             When set to no, instance is deleted at the end of the job.
             Set to yes to prevent cleanup, for debug etc. Instance will be
             removed by the cleanup job after 48 hours.
+      - string:
+          name: IMAGE
+          default: "{IMAGE}"
+          description: "Pattern used to find an image to build the instance for the aio, defaults to 'Ubuntu 14.04 LTS'"
     properties:
       - rpc-openstack-github
     triggers:
@@ -341,7 +354,7 @@
             git checkout $JENKINS_RPC_BRANCH
             git reset --hard origin/$JENKINS_RPC_BRANCH
             . scripts/gating_bash_lib.sh
-            managed_aio
+            managed_aio "{IMAGE}"
     publishers:
       # archive artifacts - these are files (logs) that are transferred to the
       # jenkins master and are available after the build has completed

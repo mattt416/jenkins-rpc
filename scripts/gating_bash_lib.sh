@@ -69,6 +69,8 @@ managed_cleanup(){
 
 managed_aio(){
 
+  image="${1:-}"
+
   # need pip, novalcient and openstack client to boot the instance that
   # will contain the aio.
   #install_pip
@@ -84,7 +86,7 @@ managed_aio(){
                                  for(i=1; i<=NF; i++) c[i]=substr($i, 0, 1)}
                                  END{for(i=1; i<=length(c); i++)
                                  {print tolower(c[i]) }}' <<<$JOB_NAME)
-  get_instance "${short_job_name}-${BUILD_ID}"
+  get_instance "${short_job_name}-${BUILD_ID}" "${image}"
   on_remote clone_rpc "$sha1"
   on_remote aio
   deploy_result=$?
@@ -474,9 +476,10 @@ openrc_from_maas_vars(){
 get_instance(){
   . /opt/jenkins/venvs/osclients/bin/activate
   instance_name="${1}-${RANDOM}"
+  image_pattern="${2:-Ubuntu 14.04 LTS}"
   echo "Booting Instance: $instance_name" >&2
   flavor="performance2-15"
-  image="$(get_image 'Ubuntu 14.04 LTS')"
+  image="$(get_image "${image_pattern}")"
   key_name=jenkins
 
   for i in {1..3}
