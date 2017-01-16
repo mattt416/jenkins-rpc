@@ -12,6 +12,11 @@ set -u
 
 pushd rpc-jobs
 
+if [ "${PURGE_OLD_JOBS:-}" == "yes" ] && [ $OPERATION == "update" ]
+then
+  DELETE_OLD = "--delete-old"
+fi
+
 # get operation
 OPERATION=${1:-update}
 [[ $# -gt 0 ]] && shift
@@ -24,6 +29,7 @@ jenkins-jobs \
   --conf jenkins_jobs.ini \
   --password $JENKINS_API_KEY \
   $OPERATION \
+  ${DELETE_OLD:-} \
   jobs.yaml \
   $@
 
