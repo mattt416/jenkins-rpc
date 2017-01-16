@@ -519,6 +519,12 @@
           name: JENKINS_RPC_BRANCH
           default: "master"
           description: "Branch to checkout for JENKINS_RPC"
+      - string:
+          name: PURGE_OLD_JOBS
+          default: yes
+          description: |
+            Auto remove obsolete jobs. Useful when jobs are removed from
+            jobs.yaml or are renamed. yes/no
     properties:
       - jenkins-rpc-github
     scm:
