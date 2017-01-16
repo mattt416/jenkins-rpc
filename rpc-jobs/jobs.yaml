@@ -516,23 +516,36 @@
           default: "https://github.com/rcbops/jenkins-rpc"
           description: "Repo url for JENKINS_RPC"
       - string:
-          name: JENKINS_RPC_BRANCH
+          name: sha1
           default: "master"
-          description: "Branch to checkout for JENKINS_RPC"
+          description: |
+            branch/sha of jenkins-rpc to be tested.
       - string:
           name: PURGE_OLD_JOBS
-          default: yes
+          default: "yes"
           description: |
             Auto remove obsolete jobs. Useful when jobs are removed from
             jobs.yaml or are renamed. yes/no
     properties:
       - jenkins-rpc-github
+    wrappers:
+      - credentials-binding:
+        - text:
+            credential-id: JJB_JENKINS_ACCOUNT
+            variable: JJB_JENKINS_ACCOUNT
     scm:
-      - jenkins-rpc-git
+      - git:
+          url: "$JENKINS_RPC_REPO"
+          branches:
+            - "$sha1"
+          refspec: "+refs/pull/*:refs/remotes/origin/pr/* +refs/heads/*:refs/remotes/origin/*"
+          name: origin
     triggers:
       - github # triggered post merge, not on PR
     builders:
-      - shell: scripts/run_jjb.sh update
+      - shell: |
+          git show HEAD
+          scripts/run_jjb.sh update
 
 
 - job:
@@ -547,23 +560,27 @@
     properties:
       - jenkins-rpc-github
     parameters:
-      - pr-params
       - string:
           name: JENKINS_RPC_REPO
           default: "https://github.com/rcbops/jenkins-rpc"
           description: "Repo url for JENKINS_RPC"
       - string:
-          name: JENKINS_RPC_BRANCH
-          default: "master"
-          description: "Branch to checkout for JENKINS_RPC"
-      - string:
-          name: ghprbTargetBranch
-          default: "master"
-      - string:
           name: sha1
           default: "master"
+          description: |
+            branch/sha of jenkins-rpc to be tested.
+    wrappers:
+      - credentials-binding:
+        - text:
+            credential-id: JJB_JENKINS_ACCOUNT
+            variable: JJB_JENKINS_ACCOUNT
     scm:
-      - jenkins-rpc-git
+      - git:
+          url: "$JENKINS_RPC_REPO"
+          branches:
+            - "$sha1"
+          refspec: "+refs/pull/*:refs/remotes/origin/pr/* +refs/heads/*:refs/remotes/origin/*"
+          name: origin
     triggers:
       - github-pull-request:
           admin-list:
@@ -580,7 +597,9 @@
           auth-id: "8b635975-7d59-45f8-b7ee-8bceb2e44ba3"
           status-context: 'JJB-Test'
     builders:
-      - shell: scripts/run_jjb.sh test
+      - shell: |
+          git show HEAD
+          scripts/run_jjb.sh test
 
 - job:
     name: JJB-RPC-Training-Multinode
