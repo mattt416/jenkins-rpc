@@ -549,7 +549,7 @@ class Build(object):
 
     def get_previous_task(self, line, lines, order=-1, get_line_num=False):
         previous_task_re = re.compile(
-            'TASK: \[((?P<role>.*)\|)?(?P<task>.*)\]')
+            'TASK \[((?P<role>.*)\|)?(?P<task>.*)\]')
         previous_play_re = re.compile(
             'PLAY \[(?P<play>.*)\]')
         task_match = None
