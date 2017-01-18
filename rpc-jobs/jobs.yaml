@@ -789,6 +789,76 @@
           ls -R ${RPC_ARTIFACTS_PUBLIC_FOLDER}
 
 - job:
+    name: JJB-artifacts-git
+    node: ArtifactBuilder
+    concurrent: false
+    build-discarder:
+      daysToKeep: 30
+    triggers:
+      - timed: "H 4 * * *"
+    parameters:
+      - string:
+          name: GIT_RPC_ARTIFACTS
+          default: "https://github.com/rcbops/rpc-artifacts"
+          description: "RPC-Artifacts Git Repository"
+      - string:
+          name: GIT_OSA
+          default: "https://github.com/openstack/openstack-ansible"
+          description: "OpenStack-Ansible Git Repository"
+    wrappers:
+      - ansicolor
+      - timestamps
+      - credentials-binding:
+        - text:
+            credential-id: RPC_REPO_IP
+            variable: REPO_HOST
+        - text:
+            credential-id: RPC_REPO_SSH_USERNAME_TEXT
+            variable: REPO_USER
+        - file:
+            credential-id: RPC_REPO_SSH_USER_PRIVATE_KEY_FILE
+            variable: REPO_USER_KEY
+        - file:
+            credential-id: RPC_REPO_SSH_HOST_PUBLIC_KEY_FILE
+            variable: REPO_HOST_PUBKEY
+      - timeout:
+          timeout: 360
+          fail: True
+    scm:
+      - git:
+          url: "${GIT_OSA}"
+          branches:
+            - "master"
+    builders:
+      - shell: |
+          #!/bin/bash
+          set -e
+          set -o pipefail
+          # Make sure that the rpc-repo key is implemented and usable.
+          mkdir -p ~/.ssh/
+          set +x
+          cat $REPO_USER_KEY > ~/.ssh/repo.key
+          chmod 600 ~/.ssh/repo.key
+          set -x
+          grep "${REPO_HOST}" ~/.ssh/known_hosts || echo "${REPO_HOST} $(cat $REPO_HOST_PUBKEY)" >> ~/.ssh/known_hosts
+          # We need both Ansible and the OSA plugins available.
+          # The simplest way to do this is to use the bootstrap script.
+          ./scripts/bootstrap-ansible.sh
+          if [ ! -d "/opt/rpc-artifacts" ]; then
+            git clone ${GIT_RPC_ARTIFACTS} /opt/rpc-artifacts
+          else
+            pushd /opt/rpc-artifacts
+              git checkout master
+              git reset --hard origin/master
+              git pull
+            popd
+          fi
+          # Append rpc-repo host to [mirrors] group
+          echo "repo ansible_host=${REPO_HOST} ansible_user=${REPO_USER} ansible_ssh_private_key_file='~/.ssh/repo.key' " >> /opt/rpc-artifacts/inventory
+          # Fetch all the git repositories, then push them to rpc-repo
+          ansible-playbook /opt/rpc-artifacts/openstackgit-update.yml -i /opt/rpc-artifacts/inventory -vv
+
+- job:
     name: JJB-Upgrade-Matrix
     project-type: workflow
     concurrent: true
