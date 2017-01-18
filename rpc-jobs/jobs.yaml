@@ -140,13 +140,16 @@
     name: 'JJB-AIO-Experimental-Jobs'
     jobs:
       - 'JJB-RPC-AIO_{series}-{context}-{ztrigger}':
-          series: mitaka-13.1
+          series: mitaka
           branch: mitaka-13.1
           branches: "do_not_build_on_pr"
           context: experimental
           ztrigger: ondemand
           DEPLOY_MAAS: "no"
           CRON: ""
+          UPGRADE: yes
+          UPGRADE_FROM_REF: "origin/liberty-12.2"
+          JENKINS_RPC_BRANCH: "bug/230"
 
 - project:
     name: 'JJB-Misc-Jobs'

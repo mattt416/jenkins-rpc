@@ -1,31 +1,29 @@
-# Functions used for constructing jenkins jobs.
+set -x # verbose
+set -u # fail on ref before assignment
+set -e # terminate script after any non zero exit
+set -o pipefail # fail even if later tasks in a pipeline would succeed
 
 SSH_KEY="/opt/jenkins/creds/id_rsa_cloud10_jenkins"
 uev=/opt/rpc-openstack/rpcd/etc/openstack_deploy/user_zzz_gating_variables.yml
 KEEP_INSTANCE=${KEEP_INSTANCE:-no}
 PS1=${PS1:->}
 
+# Vars for upgrade persistent resources
+upr_prefix="upgrade_persistent_resources"
+upr_flavor="${upr_prefix}_small"
+upr_volume="${upr_prefix}_bfv_cirros"
+upr_image="cirros"
+upr_instance_bfv="${upr_prefix}_bfv"
+upr_instance_eph="${upr_prefix}_eph"
+upr_kp="${upr_prefix}_keypair"
+upr_sg="${upr_prefix}_secgroup"
+upr_priv_key="${upr_prefix}_id_rsa"
+
 abort(){
   # This kills children, but not the shell itself
   pkill -P $$ --signal 9
   exit 1
 }
-
-set_shopts_env(){
-  set -x # verbose
-  set -u # fail on ref before assignment
-  set -e # terminate script after any non zero exit
-  set -o pipefail # fail even if later tasks in a pipeline would succeed
-
-  # Useful for getting real time feedback from ansible playbook runs
-  export PYTHONUNBUFFERED=1
-  env > buildenv
-
-  # Set ubuntu repo to supplied value. Effects Host bootstrap, and container default repo.
-  export BOOTSTRAP_OPTS="${BOOTSTRAP_OPTS:-} bootstrap_host_ubuntu_repo=${UBUNTU_REPO}"
-  export BOOTSTRAP_OPTS="${BOOTSTRAP_OPTS} bootstrap_host_ubuntu_security_repo=${UBUNTU_REPO}"
-}
-set_shopts_env
 
 managed_cleanup(){
   echo "Starting cleanup"
@@ -68,6 +66,13 @@ managed_cleanup(){
 }
 
 managed_aio(){
+  # Useful for getting real time feedback from ansible playbook runs
+  export PYTHONUNBUFFERED=1
+  env > buildenv
+
+  # Set ubuntu repo to supplied value. Effects Host bootstrap, and container default repo.
+  export BOOTSTRAP_OPTS="${BOOTSTRAP_OPTS:-} bootstrap_host_ubuntu_repo=${UBUNTU_REPO}"
+  export BOOTSTRAP_OPTS="${BOOTSTRAP_OPTS} bootstrap_host_ubuntu_security_repo=${UBUNTU_REPO}"
 
   image="${1:-}"
 
@@ -175,6 +180,7 @@ ceph_upgrade_prep(){
 
 upgrade(){
   if [ "$UPGRADE" == "yes" ]; then
+      in_container utility upgrade_persistent_resources_create
       git reset --hard
       git submodule foreach git reset --hard
       git checkout ${sha1}
@@ -192,6 +198,8 @@ upgrade(){
       else
         run_rpc_deploy
       fi
+      in_container utility upgrade_persistent_resources_check
+      in_container utility upgrade_persistent_resources_clean ||:
       run_tempest
       run_holland
   fi
@@ -614,4 +622,123 @@ clone_rpc(){
     git checkout "$ref"
     git submodule update --init
   popd
+}
+
+in_container(){
+  c_part="$1"
+  command="$2"
+  lib="${WORKSPACE}/jenkins-rpc/scripts/gating_bash_lib.sh"
+  # Only works with FS backed containers as are used in the AIO gate.
+  container=$(lxc-ls |grep $c_part -m1)
+  cp $lib /var/lib/lxc/$container/rootfs/tmp
+  lxc-attach --keep-env -n $container \
+    -- bash -c "echo \"executing on container \$(hostname)\"; . /tmp/gating_bash_lib.sh; $command"
+}
+
+upgrade_persistent_resources_clean(){
+  . ~/openrc
+
+  upr_delete(){ openstack $1 delete $2 ${3:-} ||:; }
+
+  upr_delete server $upr_instance_eph --wait
+  upr_delete server $upr_instance_bfv --wait
+
+  upr_delete flavor $upr_flavor
+  upr_delete volume $upr_volume
+  upr_delete keypair $upr_kp
+
+  openstack security group list | grep -q $upr_sg && {
+    openstack security group rule list -f value $upr_sg |awk '{print $1}'\
+      |while read rule_id; do openstack security group rule delete $rule_id\
+      ; done
+    openstack security group delete $upr_sg
+  }
+  rm ~/$upr_priv_key ||:
+}
+
+# Create resources that should be maintained during an upgrade
+upgrade_persistent_resources_create(){
+  . ~/openrc
+  upgrade_persistent_resources_clean
+
+  # Create flavor if it doesn't exist
+  openstack flavor create \
+    --public \
+    --ram 256 \
+    --vcpus 1 \
+    --disk 20 \
+    --id $upr_flavor \
+    $upr_flavor
+
+  # Create cirros volume, for boot-fromv-volume instance
+  openstack volume create \
+    --image $upr_image \
+    --size 5 \
+    --availability-zone nova \
+    $upr_volume
+
+  openstack keypair create $upr_kp > ~/$upr_priv_key
+  chmod 600 ~/$upr_priv_key
+  openstack security group create $upr_sg
+  openstack security group rule create --proto icmp $upr_sg
+  openstack security group rule create --proto tcp --dst-port 22 $upr_sg
+
+
+  # Create instance with local / ephemeral storage
+  openstack server create \
+    --image $upr_image \
+    --flavor $upr_flavor \
+    --key-name $upr_kp \
+    --security-group $upr_sg \
+    --availability-zone nova \
+    $upr_instance_eph
+
+  # Create volume backed instance
+  openstack server create \
+    --volume $upr_volume \
+    --flavor $upr_flavor \
+    --key-name $upr_kp \
+    --security-group $upr_sg \
+    --availability-zone nova \
+    $upr_instance_bfv
+
+}
+
+upgrade_persistent_resources_check(){
+  . ~/openrc
+
+  upr_exists(){
+    if openstack $1 list -f value |grep -q $2
+    then
+      echo "$1 $2 still exists (test pass)"
+    else
+      echo "$1 $2 not found - upgrade persistent resource test fail"
+      return 1
+    fi
+  }
+
+  # instance ip
+  iip(){ openstack server show -f value $1 |awk -F= '/public/{print $2}'; }
+
+  check_instance(){
+    thost="$(iip $1)"
+    ping -c 3 $thost
+    ssh \
+      -o "StrictHostKeyChecking=no" \
+      -i ~/$upr_priv_key \
+      cirros@$thost \
+      "hostname; uptime"
+  }
+
+
+  upr_exists flavor $upr_flavor
+  upr_exists volume $upr_volume
+  upr_exists keypair $upr_kp
+  upr_exists "security group" $upr_sg
+  upr_exists server $upr_instance_eph
+  upr_exists server $upr_instance_bfv
+
+  check_instance $upr_instance_eph
+  check_instance $upr_instance_bfv
+  echo "Upgrade Persistent Resources Check Completed: Pass"
 }
