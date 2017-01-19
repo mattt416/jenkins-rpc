@@ -692,9 +692,9 @@
           allow-empty-results: true
 
 - job:
-    name: JJB-apt-artifacts
-    node: artifcats
-    concurrent: true
+    name: JJB-artifacts-apt
+    node: ArtifactBuilder
+    concurrent: false
     build-discarder:
       daysToKeep: 30
     triggers:
