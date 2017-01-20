@@ -841,6 +841,9 @@
           chmod 600 ~/.ssh/repo.key
           set -x
           grep "${REPO_HOST}" ~/.ssh/known_hosts || echo "${REPO_HOST} $(cat $REPO_HOST_PUBKEY)" >> ~/.ssh/known_hosts
+          # We want the role downloads to be done via git
+          # This ensures that there is no race condition with the aptly job
+          export ANSIBLE_ROLE_FETCH_MODE="git-clone"
           # We need both Ansible and the OSA plugins available.
           # The simplest way to do this is to use the bootstrap script.
           ./scripts/bootstrap-ansible.sh
