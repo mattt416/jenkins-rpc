@@ -117,7 +117,7 @@
     ztrigger:
       - pr:
           CRON: ""
-          DEPLOY_MAAS: "no"
+          USER_VARS: "maas_use_api: false"
       - periodic:
           branches: "do_not_build_on_pr"
     exclude:
