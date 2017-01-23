@@ -25,7 +25,7 @@
     branches: "liberty-.*|mitaka-.*|newton-.*|master"
     REPO_HOST: "23.253.158.148"
     REPO_USER: "root"
-    CRON: "H */6 * * *"
+    CRON: "H H(9-21) * * 1-5"
     KEEP_INSTANCE: "no"
     IMAGE: "Ubuntu 14.04 LTS"
 
