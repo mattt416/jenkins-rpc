@@ -691,7 +691,12 @@ upgrade_persistent_resources_create(){
     --key-name $upr_kp \
     --security-group $upr_sg \
     --availability-zone nova \
+    --nic net-id=private \
     $upr_instance_eph
+
+  # Create floating IP and associate w/ instance
+  floating_ip_eph=$(openstack ip floating create -f value -c ip public)
+  openstack ip floating add $floating_ip_eph $upr_instance_eph
 
   # Create volume backed instance
   openstack server create \
@@ -701,6 +706,10 @@ upgrade_persistent_resources_create(){
     --security-group $upr_sg \
     --availability-zone nova \
     $upr_instance_bfv
+
+  # Create floating IP and associate w/ instance
+  floating_ip_bfv=$(openstack ip floating create -f value -c ip public)
+  openstack ip floating add $floating_ip_bfv $upr_instance_bfv
 
 }
 
@@ -718,7 +727,7 @@ upgrade_persistent_resources_check(){
   }
 
   # instance ip
-  iip(){ openstack server show -f value $1 |awk -F= '/public/{print $2}'; }
+  iip(){ openstack server show -f value -c addresses $1 | sed -e 's/private=.*, //g'; }
 
   check_instance(){
     thost="$(iip $1)"
