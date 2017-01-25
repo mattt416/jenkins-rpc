@@ -731,6 +731,10 @@
           name: RPC_ARTIFACTS_PUBLIC_FOLDER
           default: "/var/www/repo"
           description: "Folder to store artifacts (public)"
+      - string:
+          name: RECREATE_SNAPSHOTS
+          default: "NO"
+          description: "Set this to YES to destroy existing snapshot for the current artifact version"
     wrappers:
       - ansicolor
       - timestamps
