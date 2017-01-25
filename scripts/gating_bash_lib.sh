@@ -705,6 +705,7 @@ upgrade_persistent_resources_create(){
     --key-name $upr_kp \
     --security-group $upr_sg \
     --availability-zone nova \
+    --nic net-id=private \
     $upr_instance_bfv
 
   # Create floating IP and associate w/ instance
