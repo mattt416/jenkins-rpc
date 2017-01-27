@@ -28,6 +28,7 @@
     CRON: "H H(9-21) * * 1-5"
     KEEP_INSTANCE: "no"
     IMAGE: "Ubuntu 14.04 LTS"
+    BUILD_SCRIPT_FUNCTION: "managed_aio"
 
 #
 # Macros for repeated blocks
@@ -179,6 +180,22 @@
             set -e
             bash scripts/heat_cleanup.sh
 
+- project:
+    name: 'JJB-artifacts-python'
+    series:
+      - master:
+          branch: master
+          branches: master
+      - newton:
+          branch: newton-14.0
+          branches: "newton-.*"
+    jobs:
+      - 'JJB-RPC-AIO_{series}-{context}-{ztrigger}':
+          context: experimental
+          ztrigger: ondemand
+          DEPLOY_MAAS: "no"
+          CRON: ""
+          BUILD_SCRIPT_FUNCTION: managed_aio_artifacts
 
 ## Job Definitions
 # This template is for testing PRs against Jenkins-RPC
@@ -302,6 +319,10 @@
           default: "{BUILD_SCRIPT_PATH}"
           description: "Path to the build script within JENKINS_RPC_REPO"
       - string:
+          name: BUILD_SCRIPT_FUNCTION
+          default: "{BUILD_SCRIPT_FUNCTION}"
+          description: "The name of the build function within JENKINS_RPC_REPO"
+      - string:
           name: OA_REPO
           default: "{OA_REPO}"
           description: "Openstack Ansible Repo - can be used to override the RPC OSA submodule"
@@ -354,7 +375,7 @@
             git checkout $JENKINS_RPC_BRANCH
             git reset --hard origin/$JENKINS_RPC_BRANCH
             . scripts/gating_bash_lib.sh
-            managed_aio "{IMAGE}"
+            $BUILD_SCRIPT_FUNCTION "$IMAGE"
     publishers:
       # archive artifacts - these are files (logs) that are transferred to the
       # jenkins master and are available after the build has completed
