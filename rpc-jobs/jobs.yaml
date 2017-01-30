@@ -185,13 +185,17 @@
     series:
       - master:
           branch: master
-          branches: master
       - newton:
           branch: newton-14.0
-          branches: "newton-.*"
+    image:
+      - trusty
+      - xenial:
+           IMAGE: "Ubuntu 16.04 LTS"
+
     jobs:
       - 'JJB-RPC-AIO_{series}-{context}-{ztrigger}':
-          context: experimental
+          branches: do_not_build_on_pr
+          context: "artifacts_{image}"
           ztrigger: ondemand
           DEPLOY_MAAS: "no"
           CRON: ""
