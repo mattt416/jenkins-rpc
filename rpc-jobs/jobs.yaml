@@ -183,19 +183,20 @@
 - project:
     name: 'JJB-artifacts-python'
     series:
-      - master:
+      - master_trusty:
           branch: master
-      - newton:
+      - master_xenial:
+          branch: master
+          IMAGE: "Ubuntu 16.04 LTS"
+      - newton_trusty:
           branch: newton-14.0
-    image:
-      - trusty
-      - xenial:
-           IMAGE: "Ubuntu 16.04 LTS"
-
+      - newton_xenial:
+          branch: newton-14.0
+          IMAGE: "Ubuntu 16.04 LTS"
     jobs:
       - 'JJB-RPC-AIO_{series}-{context}-{ztrigger}':
           branches: do_not_build_on_pr
-          context: "artifacts_{image}"
+          context: "artifacts"
           ztrigger: ondemand
           DEPLOY_MAAS: "no"
           CRON: ""
