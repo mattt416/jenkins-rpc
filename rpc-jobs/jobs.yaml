@@ -346,6 +346,14 @@
           name: IMAGE
           default: "{IMAGE}"
           description: "Pattern used to find an image to build the instance for the aio, defaults to 'Ubuntu 14.04 LTS'"
+      - string:
+          name: REPO_USER
+          default: "{REPO_USER}"
+          description: "The user account for write access to rpc-repo"
+      - string:
+          name: REPO_HOST
+          default: "{REPO_HOST}"
+          description: "The host address for rpc-repo"
     properties:
       - rpc-openstack-github
     triggers:
