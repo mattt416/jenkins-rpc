@@ -597,6 +597,9 @@ on_remote(){
     rackspace_cloud_password
     rackspace_cloud_tenant_id
     rackspace_cloud_username
+    REPO_KEY
+    REPO_HOST
+    REPO_USER
   )
 
   #Dump env vars which will be required on the remote host
