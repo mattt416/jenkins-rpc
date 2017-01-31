@@ -407,7 +407,7 @@ skip_if_doc_only(){
 
   # remove origin/ from sha1 if it is alredy prepended.
   sha1="${sha1#origin/}"
-  if [[ "${ROOT_BUILD_CAUSE}" != "TIMERTRIGGER" ]]; then
+  if [[ "${ROOT_BUILD_CAUSE}" == "GHPRBCAUSE" ]]; then
     # long stat widths specified to ensure paths aren't truncated
     (git show --stat=400,400 origin/$sha1 \
         || git show --stat=400,400 $sha1 )\
