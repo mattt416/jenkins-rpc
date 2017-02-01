@@ -817,9 +817,13 @@
           default: "https://github.com/rcbops/rpc-artifacts"
           description: "RPC-Artifacts Git Repository"
       - string:
-          name: GIT_OSA
-          default: "https://github.com/openstack/openstack-ansible"
-          description: "OpenStack-Ansible Git Repository"
+          name: RPC_REPO
+          default: "{RPC_REPO}"
+          description: "RPC REPO URL"
+      - string:
+          name: RPC_REPO_BRANCH
+          default: "master"
+          description: "RPC REPO Branch"
     wrappers:
       - ansicolor
       - timestamps
@@ -841,9 +845,9 @@
           fail: True
     scm:
       - git:
-          url: "${GIT_OSA}"
+          url: "${RPC_REPO}"
           branches:
-            - "master"
+            - "${RPC_REPO_BRANCH}"
     builders:
       - shell: |
           #!/bin/bash
@@ -859,6 +863,10 @@
           # We want the role downloads to be done via git
           # This ensures that there is no race condition with the aptly job
           export ANSIBLE_ROLE_FETCH_MODE="git-clone"
+          # The rpc-openstack repo requires the openstack-ansible submodule
+          # to be initiated and updated
+          git submodule init
+          git submodule update
           # We need both Ansible and the OSA plugins available.
           # The simplest way to do this is to use the bootstrap script.
           ./scripts/bootstrap-ansible.sh
