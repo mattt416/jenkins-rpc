@@ -885,7 +885,8 @@
           # Append rpc-repo host to [mirrors] group
           echo "repo ansible_host=${REPO_HOST} ansible_user=${REPO_USER} ansible_ssh_private_key_file='~/.ssh/repo.key' " >> /opt/rpc-artifacts/inventory
           # Fetch all the git repositories, then push them to rpc-repo
-          ansible-playbook /opt/rpc-artifacts/openstackgit-update.yml -i /opt/rpc-artifacts/inventory -vv
+          # The openstack-ansible CLI is used to ensure that the library path is set
+          openstack-ansible /opt/rpc-artifacts/openstackgit-update.yml -i /opt/rpc-artifacts/inventory -vv
 
 - job:
     name: JJB-Upgrade-Matrix
