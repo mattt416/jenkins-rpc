@@ -818,7 +818,7 @@
           description: "RPC-Artifacts Git Repository"
       - string:
           name: RPC_REPO
-          default: "{RPC_REPO}"
+          default: "https://github.com/rcbops/rpc-openstack"
           description: "RPC REPO URL"
       - string:
           name: RPC_REPO_BRANCH
