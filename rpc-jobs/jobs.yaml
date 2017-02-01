@@ -867,6 +867,9 @@
           # to be initiated and updated
           git submodule init
           git submodule update
+          # The BASE_DIR needs to be set to ensure that the scripts
+          # know it and use this checkout appropriately.
+          export BASE_DIR=${PWD}
           # We need both Ansible and the OSA plugins available.
           # The simplest way to do this is to use the bootstrap script.
           ./scripts/bootstrap-ansible.sh
