@@ -183,15 +183,10 @@
 - project:
     name: 'JJB-artifacts-python'
     series:
-      - master_trusty:
-          branch: master
-      - master_xenial:
-          branch: master
-          IMAGE: "Ubuntu 16.04 LTS"
       - newton_trusty:
-          branch: newton-14.0
+          branch: artifacts-14.0
       - newton_xenial:
-          branch: newton-14.0
+          branch: artifacts-14.0
           IMAGE: "Ubuntu 16.04 LTS"
     jobs:
       - 'JJB-RPC-AIO_{series}-{context}-{ztrigger}':
