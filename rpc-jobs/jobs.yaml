@@ -813,16 +813,12 @@
       - timed: "H 4 * * *"
     parameters:
       - string:
-          name: GIT_RPC_ARTIFACTS
-          default: "https://github.com/rcbops/rpc-artifacts"
-          description: "RPC-Artifacts Git Repository"
-      - string:
           name: RPC_REPO
           default: "https://github.com/rcbops/rpc-openstack"
           description: "RPC REPO URL"
       - string:
           name: RPC_REPO_BRANCH
-          default: "master"
+          default: "artifacts-14.0"
           description: "RPC REPO Branch"
     wrappers:
       - ansicolor
@@ -873,20 +869,12 @@
           # We need both Ansible and the OSA plugins available.
           # The simplest way to do this is to use the bootstrap script.
           ./scripts/bootstrap-ansible.sh
-          if [ ! -d "/opt/rpc-artifacts" ]; then
-            git clone ${GIT_RPC_ARTIFACTS} /opt/rpc-artifacts
-          else
-            pushd /opt/rpc-artifacts
-              git checkout master
-              git reset --hard origin/master
-              git pull
-            popd
-          fi
-          # Append rpc-repo host to [mirrors] group
-          echo "repo ansible_host=${REPO_HOST} ansible_user=${REPO_USER} ansible_ssh_private_key_file='~/.ssh/repo.key' " >> /opt/rpc-artifacts/inventory
+          # Setup the inventory
+          echo '[mirrors]' > ${BASE_DIR}/inventory
+          echo "repo ansible_host=${REPO_HOST} ansible_user=${REPO_USER} ansible_ssh_private_key_file='~/.ssh/repo.key' " >> ${BASE_DIR}/inventory
           # Fetch all the git repositories, then push them to rpc-repo
           # The openstack-ansible CLI is used to ensure that the library path is set
-          openstack-ansible /opt/rpc-artifacts/openstackgit-update.yml -i /opt/rpc-artifacts/inventory -vv
+          openstack-ansible ${BASE_DIR}/scripts/artifacts-building/openstackgit-update.yml -i ${BASE_DIR}/inventory -vv
 
 - job:
     name: JJB-Upgrade-Matrix
