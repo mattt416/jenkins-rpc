@@ -134,8 +134,7 @@ managed_aio_artifacts(){
 aio_artifact_build(){
   prep
   export TERM=linux
-  sudo -E git clone https://github.com/rcbops/rpc-artifacts.git /opt/rpc-artifacts
-  sudo -E /opt/rpc-artifacts/build-python-artifacts.sh
+  sudo -E /opt/rpc-openstack/scripts/artifacts-building/python/build-python-artifacts.sh
   deploy_result=$?
   return $deploy_result
 }
