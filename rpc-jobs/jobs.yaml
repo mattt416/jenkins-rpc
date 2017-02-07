@@ -737,13 +737,13 @@
             Target branch - the branch to be tested (sha1 param) will
             be rebased against this. Also overridden by github pull request builder plugin.
       - string:
-          name: RPC_ARTIFACTS
-          default: "https://github.com/rcbops/rpc-artifacts.git"
-          description: "RPC-Artifacts Repo"
+          name: RPC_REPO
+          default: "https://github.com/rcbops/rpc-openstack"
+          description: "RPC REPO URL"
       - string:
-          name: RPC_ARTIFACTS_BRANCH
-          default: "master"
-          description: "RPC-Artifacts Branch"
+          name: RPC_REPO_BRANCH
+          default: "artifacts-14.0"
+          description: "RPC REPO Branch"
       - string:
           name: ANSIBLE_DEBUG
           default: "0"
@@ -791,12 +791,12 @@
           fail: True
     scm:
       - git:
-          url: "${RPC_ARTIFACTS}"
+          url: "${RPC_REPO}"
           branches:
-            - "${RPC_ARTIFACTS_BRANCH}"
+            - "${RPC_REPO_BRANCH}"
     builders:
       - shell: |
-          ./build-apt-artifacts.sh
+          ./scripts/artifacts-building/apt/build-apt-artifacts.sh
 
 - job:
     name: JJB-artifacts-git
