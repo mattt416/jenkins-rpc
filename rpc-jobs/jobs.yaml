@@ -191,11 +191,28 @@
     jobs:
       - 'JJB-RPC-AIO_{series}-{context}-{ztrigger}':
           branches: do_not_build_on_pr
-          context: "artifacts"
+          context: "artifacts_python"
           ztrigger: ondemand
           DEPLOY_MAAS: "no"
           CRON: ""
-          BUILD_SCRIPT_FUNCTION: managed_aio_artifacts
+          BUILD_SCRIPT_FUNCTION: managed_aio_artifacts_python
+
+- project:
+    name: 'JJB-artifacts-containers'
+    series:
+      - newton_trusty:
+          branch: artifacts-14.0
+      - newton_xenial:
+          branch: artifacts-14.0
+          IMAGE: "Ubuntu 16.04 LTS"
+    jobs:
+      - 'JJB-RPC-AIO_{series}-{context}-{ztrigger}':
+          branches: do_not_build_on_pr
+          context: "artifacts_containers"
+          ztrigger: ondemand
+          DEPLOY_MAAS: "no"
+          CRON: ""
+          BUILD_SCRIPT_FUNCTION: managed_aio_artifacts_containers
 
 ## Job Definitions
 # This template is for testing PRs against Jenkins-RPC
