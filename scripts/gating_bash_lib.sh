@@ -103,7 +103,7 @@ aio(){
   return $deploy_result
 }
 
-managed_aio_artifacts(){
+managed_aio_artifacts_python(){
 
   image="${1:-}"
 
@@ -124,17 +124,53 @@ managed_aio_artifacts(){
                                  {print tolower(c[i]) }}' <<<$JOB_NAME)
   get_instance "${short_job_name}-${BUILD_ID}" "${image}"
   on_remote clone_rpc "$sha1"
-  on_remote aio_artifact_build
+  on_remote aio_artifact_python_build
   deploy_result=$?
   # work out working dir on remote, for executing stuff and collecting artefacts
   return $deploy_result
   # teardown called by exit handler
 }
 
-aio_artifact_build(){
+managed_aio_artifacts_containers(){
+
+  image="${1:-}"
+
+  # need pip, novalcient and openstack client to boot the instance that
+  # will contain the aio.
+  #install_pip
+  #pip install python-novaclient python-openstackclient
+
+  # managed_cleanup is now called as a seperate shell step.
+  trap abort SIGHUP SIGINT SIGTERM
+  openrc_from_maas_vars
+  # reduce job name to first character of each word
+  # eg jjb-ugprade-matrix --> jum
+  # This is to avoid hitting the container name limit
+  short_job_name=$(awk -F'[-_]' '{ORS=""
+                                 for(i=1; i<=NF; i++) c[i]=substr($i, 0, 1)}
+                                 END{for(i=1; i<=length(c); i++)
+                                 {print tolower(c[i]) }}' <<<$JOB_NAME)
+  get_instance "${short_job_name}-${BUILD_ID}" "${image}"
+  on_remote clone_rpc "$sha1"
+  on_remote aio_artifact_containers_build
+  deploy_result=$?
+  # work out working dir on remote, for executing stuff and collecting artefacts
+  return $deploy_result
+  # teardown called by exit handler
+}
+
+aio_artifact_python_build(){
   prep
   export TERM=linux
   sudo -E /opt/rpc-openstack/scripts/artifacts-building/python/build-python-artifacts.sh
+  deploy_result=$?
+  return $deploy_result
+}
+
+aio_artifact_containers_build(){
+  prep
+  export TERM=linux
+  sudo -E /opt/rpc-openstack/scripts/artifacts-building/containers/build-process.sh
   deploy_result=$?
   return $deploy_result
 }
