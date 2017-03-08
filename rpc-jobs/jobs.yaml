@@ -654,7 +654,7 @@
     build-discarder:
       daysToKeep: 30
     triggers:
-      - timed: "H */6 * * *"
+      - timed: "H H(9-21) * * 1-5"
     parameters:
       - string:
           name: RPC_HEAT_ANSIBLE_REPO
